@@ -486,14 +486,15 @@ async def create_session_from_oauth(request: Request):
     """Exchange Emergent OAuth session_id for user data and create session"""
     body = await request.json()
     session_id = body.get("session_id")
+    referral_code = body.get("referral_code")
     
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id required")
     
     # Call Emergent Auth API
     import httpx
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
+    async with httpx.AsyncClient() as http_client:
+        response = await http_client.get(
             "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
             headers={"X-Session-ID": session_id}
         )
@@ -517,17 +518,50 @@ async def create_session_from_oauth(request: Request):
         )
         user_id = user_doc["id"]
     else:
-        # Create new user with 100 free credits
+        # Check referral code if provided
+        referrer_id = None
+        bonus_credits = 0
+        if referral_code:
+            referrer = await db.users.find_one({"referral_code": referral_code.upper()}, {"_id": 0})
+            if referrer:
+                referrer_id = referrer["id"]
+                bonus_credits = 20
+                
+                # Award 50 credits to referrer
+                await db.users.update_one(
+                    {"id": referrer_id},
+                    {
+                        "$inc": {
+                            "credits": 50,
+                            "total_referrals": 1,
+                            "referral_credits_earned": 50
+                        }
+                    }
+                )
+        
+        # Create new user with 100 + bonus free credits
         user = User(
             name=oauth_data["name"],
             email=oauth_data["email"],
-            credits=100
+            credits=100 + bonus_credits,
+            referred_by=referrer_id
         )
         user_dict = user.model_dump()
         user_dict['picture'] = oauth_data.get("picture")
         user_dict['created_at'] = user_dict['created_at'].isoformat()
         await db.users.insert_one(user_dict)
         user_id = user.id
+        
+        # Log referral
+        if referrer_id:
+            await db.referrals.insert_one({
+                "referrer_id": referrer_id,
+                "referred_user_id": user_id,
+                "referred_user_name": oauth_data["name"],
+                "referral_code": referral_code.upper(),
+                "credits_awarded": 50,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
     
     # Create session in database
     session_token = oauth_data["session_token"]
