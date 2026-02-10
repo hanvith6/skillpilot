@@ -408,10 +408,41 @@ async def signup(user_data: UserSignup):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Check referral code if provided
+    referrer_id = None
+    bonus_credits = 0
+    if user_data.referral_code:
+        referrer = await db.users.find_one({"referral_code": user_data.referral_code.upper()}, {"_id": 0})
+        if referrer:
+            referrer_id = referrer["id"]
+            bonus_credits = 20  # New user gets 20 bonus credits
+            
+            # Award 50 credits to referrer
+            await db.users.update_one(
+                {"id": referrer_id},
+                {
+                    "$inc": {
+                        "credits": 50,
+                        "total_referrals": 1,
+                        "referral_credits_earned": 50
+                    }
+                }
+            )
+            
+            # Log referral
+            await db.referrals.insert_one({
+                "referrer_id": referrer_id,
+                "referred_user_id": str(uuid.uuid4()),  # Will update after user creation
+                "referral_code": user_data.referral_code.upper(),
+                "credits_awarded": 50,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+    
     user = User(
         name=user_data.name,
         email=user_data.email,
-        credits=100
+        credits=100 + bonus_credits,  # 100 base + 20 bonus if referred
+        referred_by=referrer_id
     )
     
     user_dict = user.model_dump()
@@ -419,6 +450,13 @@ async def signup(user_data: UserSignup):
     user_dict['created_at'] = user_dict['created_at'].isoformat()
     
     await db.users.insert_one(user_dict)
+    
+    # Update referral with actual user ID
+    if referrer_id:
+        await db.referrals.update_one(
+            {"referrer_id": referrer_id, "referred_user_id": str(uuid.uuid4())},
+            {"$set": {"referred_user_id": user.id, "referred_user_name": user_data.name}}
+        )
     
     token = create_access_token({"sub": user.id})
     return AuthResponse(token=token, user=user)
