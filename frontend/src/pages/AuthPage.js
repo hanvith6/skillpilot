@@ -76,22 +76,37 @@ const AuthPage = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div>
-                <Label htmlFor="name" className="text-slate-300">Full Name</Label>
-                <div className="relative mt-1">
-                  <UserIcon className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="pl-10 bg-slate-950/50 border-white/10 focus:border-violet-500 text-white"
-                    required
-                    data-testid="name-input"
-                  />
+              <>
+                <div>
+                  <Label htmlFor="name" className="text-slate-300">Full Name</Label>
+                  <div className="relative mt-1">
+                    <UserIcon className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="pl-10 bg-slate-950/50 border-white/10 focus:border-violet-500 text-white"
+                      required
+                      data-testid="name-input"
+                    />
+                  </div>
                 </div>
-              </div>
+                <div>
+                  <Label htmlFor="referral" className="text-slate-300">Referral Code (Optional)</Label>
+                  <Input
+                    id="referral"
+                    type="text"
+                    placeholder="SKILLMATE-ABC123"
+                    value={formData.referral_code}
+                    onChange={(e) => setFormData({ ...formData, referral_code: e.target.value.toUpperCase() })}
+                    className="mt-1 bg-slate-950/50 border-white/10 focus:border-violet-500 text-white"
+                    data-testid="referral-input"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Get 20 bonus credits with a referral code!</p>
+                </div>
+              </>
             )}
 
             <div>
