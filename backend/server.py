@@ -612,6 +612,22 @@ async def logout(request: Request, current_user: User = Depends(get_current_user
     
     return json_response
 
+@api_router.get("/referrals/stats", response_model=ReferralStats)
+async def get_referral_stats(current_user: User = Depends(get_current_user)):
+    """Get user's referral statistics"""
+    # Get recent referrals
+    recent_referrals = await db.referrals.find(
+        {"referrer_id": current_user.id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(10).to_list(10)
+    
+    return ReferralStats(
+        referral_code=current_user.referral_code,
+        total_referrals=current_user.total_referrals,
+        credits_earned=current_user.referral_credits_earned,
+        recent_referrals=recent_referrals
+    )
+
 # AI Generation endpoints
 @api_router.post("/generate/resume")
 async def generate_resume(request: ResumeRequest, current_user: User = Depends(get_current_user)):
