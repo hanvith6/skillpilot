@@ -27,12 +27,19 @@ const AuthCallback = ({ onLogin }) => {
       }
 
       const sessionId = sessionIdMatch[1];
+      
+      // Check for referral code in URL query params
+      const searchParams = new URLSearchParams(location.search);
+      const referralCode = searchParams.get('ref');
 
       try {
         // Exchange session_id for user data
-        const response = await axios.post(`${API_URL}/api/auth/session`, {
-          session_id: sessionId
-        }, {
+        const requestBody = { session_id: sessionId };
+        if (referralCode) {
+          requestBody.referral_code = referralCode;
+        }
+
+        const response = await axios.post(`${API_URL}/api/auth/session`, requestBody, {
           withCredentials: true  // Important for cookies
         });
 
@@ -44,7 +51,11 @@ const AuthCallback = ({ onLogin }) => {
         // Call parent's onLogin with user data
         onLogin(response.data.session_token, response.data.user);
 
-        toast.success('Signed in successfully!');
+        if (referralCode) {
+          toast.success('Signed in successfully! You got 120 free credits with referral!');
+        } else {
+          toast.success('Signed in successfully!');
+        }
         
         // Navigate to dashboard with user data
         navigate('/dashboard', { 
