@@ -283,14 +283,17 @@ Provide a well-structured answer with key points and suggested delivery notes.""
 
 def call_gemini(prompt: str, emergent_mode: bool = False) -> str:
     """Call Gemini API with appropriate settings"""
-    model_name = "gemini-2.5-pro" if emergent_mode else "gemini-2.5-flash"
+    # Use same model but different config for emergent mode (faster, more focused)
+    model_name = "gemini-2.5-flash"
+    temperature = 0.3 if emergent_mode else 0.7
+    max_tokens = 1500 if emergent_mode else 2000
     
     response = client.models.generate_content(
         model=model_name,
         contents=prompt,
         config=genai.types.GenerateContentConfig(
-            temperature=0.7,
-            max_output_tokens=2000
+            temperature=temperature,
+            max_output_tokens=max_tokens
         )
     )
     return response.text
