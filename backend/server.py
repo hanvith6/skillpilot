@@ -35,7 +35,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Initialize services
-genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
 razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_KEY_ID'], os.environ['RAZORPAY_KEY_SECRET']))
 
 # Password hashing
