@@ -283,10 +283,16 @@ Provide a well-structured answer with key points and suggested delivery notes.""
 
 def call_gemini(prompt: str, emergent_mode: bool = False) -> str:
     """Call Gemini API with appropriate settings"""
-    model_name = "gemini-2.0-flash-exp" if emergent_mode else "gemini-1.5-flash"
-    model = genai.GenerativeModel(model_name)
+    model_name = "gemini-2.5-pro" if emergent_mode else "gemini-2.5-flash"
     
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            temperature=0.7,
+            max_output_tokens=2000
+        )
+    )
     return response.text
 
 def generate_pdf(content: Dict[str, Any], doc_type: str) -> BytesIO:
