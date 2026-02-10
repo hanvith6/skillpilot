@@ -155,6 +155,11 @@ const DashboardPage = ({ user, onLogout }) => {
           </div>
         </div>
 
+        {/* Referral Section */}
+        <div className="mb-8">
+          <ReferralSection user={user} />
+        </div>
+
         {/* Recent History */}
         <div>
           <div className="flex items-center justify-between mb-4">
