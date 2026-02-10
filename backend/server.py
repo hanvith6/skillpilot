@@ -178,7 +178,29 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-async def get_current_user(authorization: str = Header(None)):
+async def get_current_user(request: Request, authorization: str = Header(None)):
+    # First check session_token cookie (Google OAuth)
+    session_token = request.cookies.get("session_token")
+    
+    if session_token:
+        session_doc = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+        if session_doc:
+            expires_at = session_doc["expires_at"]
+            if isinstance(expires_at, str):
+                expires_at = datetime.fromisoformat(expires_at)
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+            
+            if expires_at < datetime.now(timezone.utc):
+                raise HTTPException(status_code=401, detail="Session expired")
+            
+            user_doc = await db.users.find_one({"id": session_doc["user_id"]}, {"_id": 0})
+            if user_doc:
+                if isinstance(user_doc.get('created_at'), str):
+                    user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+                return User(**user_doc)
+    
+    # Fallback to JWT token (email/password auth)
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     
