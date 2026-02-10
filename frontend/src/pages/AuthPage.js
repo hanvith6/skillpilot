@@ -15,7 +15,8 @@ const AuthPage = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    referral_code: ''
   });
   const navigate = useNavigate();
 
