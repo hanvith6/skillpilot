@@ -429,8 +429,105 @@ async def login(credentials: UserLogin):
     return AuthResponse(token=token, user=user)
 
 @api_router.get("/auth/me", response_model=User)
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(request: Request, current_user: User = Depends(get_current_user)):
     return current_user
+
+@api_router.post("/auth/session")
+async def create_session_from_oauth(request: Request):
+    """Exchange Emergent OAuth session_id for user data and create session"""
+    body = await request.json()
+    session_id = body.get("session_id")
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id required")
+    
+    # Call Emergent Auth API
+    import httpx
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": session_id}
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=400, detail="Invalid session_id")
+        
+        oauth_data = response.json()
+    
+    # Check if user exists by email
+    user_doc = await db.users.find_one({"email": oauth_data["email"]}, {"_id": 0})
+    
+    if user_doc:
+        # Update existing user
+        await db.users.update_one(
+            {"email": oauth_data["email"]},
+            {"$set": {
+                "name": oauth_data["name"],
+                "picture": oauth_data.get("picture")
+            }}
+        )
+        user_id = user_doc["id"]
+    else:
+        # Create new user with 100 free credits
+        user = User(
+            name=oauth_data["name"],
+            email=oauth_data["email"],
+            credits=100
+        )
+        user_dict = user.model_dump()
+        user_dict['picture'] = oauth_data.get("picture")
+        user_dict['created_at'] = user_dict['created_at'].isoformat()
+        await db.users.insert_one(user_dict)
+        user_id = user.id
+    
+    # Create session in database
+    session_token = oauth_data["session_token"]
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Get updated user
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if isinstance(user_doc.get('created_at'), str):
+        user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+    
+    user_response = User(**user_doc)
+    
+    # Set httpOnly cookie
+    response = {"user": user_response, "session_token": session_token}
+    
+    from fastapi.responses import JSONResponse
+    json_response = JSONResponse(content={"user": user_response.model_dump(), "session_token": session_token})
+    json_response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7*24*60*60  # 7 days
+    )
+    
+    return json_response
+
+@api_router.post("/auth/logout")
+async def logout(request: Request, current_user: User = Depends(get_current_user)):
+    """Logout user and clear session"""
+    session_token = request.cookies.get("session_token")
+    
+    if session_token:
+        await db.user_sessions.delete_one({"session_token": session_token})
+    
+    from fastapi.responses import JSONResponse
+    json_response = JSONResponse(content={"success": True})
+    json_response.delete_cookie(key="session_token", path="/")
+    
+    return json_response
 
 # AI Generation endpoints
 @api_router.post("/generate/resume")
