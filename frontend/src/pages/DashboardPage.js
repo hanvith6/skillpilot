@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import ReferralSection from '../components/ReferralSection';
 import { FileText, Lightbulb, Languages, MessageCircle, ArrowRight, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import axios from 'axios';
