@@ -68,6 +68,7 @@ class UserSignup(BaseModel):
     name: str
     email: EmailStr
     password: str
+    referral_code: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -79,7 +80,17 @@ class User(BaseModel):
     name: str
     email: EmailStr
     credits: int = 100
+    referral_code: str = Field(default_factory=lambda: f"SKILLMATE-{str(uuid.uuid4())[:8].upper()}")
+    referred_by: Optional[str] = None
+    total_referrals: int = 0
+    referral_credits_earned: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ReferralStats(BaseModel):
+    referral_code: str
+    total_referrals: int
+    credits_earned: int
+    recent_referrals: List[Dict[str, Any]]
 
 class AuthResponse(BaseModel):
     token: str
