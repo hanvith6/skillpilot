@@ -10,7 +10,7 @@ class SkillMateAPITester:
         self.user_id = None
         self.tests_run = 0
         self.tests_passed = 0
-        self.test_user_email = f"test_user_{datetime.now().strftime('%H%M%S')}@skillmate.test"
+        self.test_user_email = f"test_user_{datetime.now().strftime('%H%M%S')}@gmail.com"
         self.test_user_password = "TestPass123!"
         self.test_user_name = "Test User"
 
