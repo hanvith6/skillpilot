@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
-import { Languages, Copy, Sparkles, Zap, Check } from 'lucide-react';
+import EmergentModeCard from '../components/EmergentModeCard';
+import { Languages, Copy, Sparkles, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Switch } from '../components/ui/switch';
-import axios from 'axios';
 import { toast } from 'sonner';
-
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+import useAIGeneration from '../hooks/useAIGeneration';
 
 const EnglishImproverPage = ({ user, onLogout, updateCredits }) => {
   const [text, setText] = useState('');
   const [emergentMode, setEmergentMode] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
   const [copied, setCopied] = useState('');
+
+  const { loading, result, generate } = useAIGeneration();
 
   const creditsNeeded = emergentMode ? 13 : 10;
 
@@ -24,30 +22,17 @@ const EnglishImproverPage = ({ user, onLogout, updateCredits }) => {
       toast.error('Please enter text to improve');
       return;
     }
-
     if (user.credits < creditsNeeded) {
       toast.error('Insufficient credits');
       return;
     }
-
-    setLoading(true);
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}/api/generate/english`,
-        { text, emergent_mode: emergentMode },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setResult(response.data.data);
-      updateCredits(user.credits - response.data.credits_used);
-      toast.success(`Text improved! ${response.data.credits_used} credits used`);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Generation failed');
-    } finally {
-      setLoading(false);
-    }
+    await generate({
+      endpoint: '/api/generate/english',
+      payload: { text, emergent_mode: emergentMode },
+      user,
+      updateCredits,
+      successMessage: (credits) => `Text improved! ${credits} credits used`,
+    });
   };
 
   const handleCopy = (type, content) => {
@@ -83,16 +68,7 @@ hi sir, hope ur doing good. i want to apply for the internship position at ur co
                     className="mt-1 bg-slate-950/50 border-white/10 focus:border-violet-500 text-white min-h-[250px]" data-testid="text-input"
                   />
                 </div>
-                <div className="flex items-center justify-between glass-effect rounded-lg p-4 border border-white/10">
-                  <div className="flex items-center space-x-3">
-                    <Zap className="w-5 h-5 text-amber-400" />
-                    <div>
-                      <div className="text-white font-medium">Emergent Mode</div>
-                      <div className="text-sm text-slate-400">Faster processing (+30% credits)</div>
-                    </div>
-                  </div>
-                  <Switch checked={emergentMode} onCheckedChange={setEmergentMode} data-testid="emergent-toggle" />
-                </div>
+                <EmergentModeCard emergentMode={emergentMode} onToggle={setEmergentMode} testId="emergent-toggle" />
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-slate-400">Credits needed:</span>
                   <span className="text-white font-bold text-lg" data-testid="credits-display">{creditsNeeded}</span>

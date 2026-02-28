@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
-import { FileText, Upload, Download, Sparkles, Zap } from 'lucide-react';
+import EmergentModeCard from '../components/EmergentModeCard';
+import { FileText, Download, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Switch } from '../components/ui/switch';
-import axios from 'axios';
 import { toast } from 'sonner';
-
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+import useAIGeneration from '../hooks/useAIGeneration';
+import useDownload from '../hooks/useDownload';
 
 const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
   const [resumeText, setResumeText] = useState('');
   const [targetRole, setTargetRole] = useState('');
   const [country, setCountry] = useState('USA');
   const [emergentMode, setEmergentMode] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [historyId, setHistoryId] = useState(null);
+
+  const { loading, result, historyId, generate } = useAIGeneration();
+  const { download } = useDownload();
 
   const creditsNeeded = emergentMode ? 26 : 20;
 
@@ -28,65 +27,20 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
       toast.error('Please fill in all required fields');
       return;
     }
-
     if (user.credits < creditsNeeded) {
       toast.error('Insufficient credits');
       return;
     }
-
-    setLoading(true);
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}/api/generate/resume`,
-        {
-          resume_text: resumeText,
-          target_role: targetRole,
-          country: country,
-          emergent_mode: emergentMode
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      setResult(response.data.data);
-      setHistoryId(response.data.history_id);
-      updateCredits(user.credits - response.data.credits_used);
-      toast.success(`Resume generated! ${response.data.credits_used} credits used`);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Generation failed');
-    } finally {
-      setLoading(false);
-    }
+    await generate({
+      endpoint: '/api/generate/resume',
+      payload: { resume_text: resumeText, target_role: targetRole, country, emergent_mode: emergentMode },
+      user,
+      updateCredits,
+      successMessage: (credits) => `Resume generated! ${credits} credits used`,
+    });
   };
 
-  const handleDownload = async (format) => {
-    if (!historyId) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/api/download/${historyId}/${format}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: 'blob'
-        }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `resume_${historyId}.${format}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success(`Downloaded as ${format.toUpperCase()}`);
-    } catch (error) {
-      toast.error('Download failed');
-    }
-  };
+  const handleDownload = (format) => download(historyId, format, 'resume');
 
   return (
     <Layout user={user} onLogout={onLogout}>
@@ -142,20 +96,11 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
                   />
                 </div>
 
-                <div className="flex items-center justify-between glass-effect rounded-lg p-4 border border-white/10">
-                  <div className="flex items-center space-x-3">
-                    <Zap className="w-5 h-5 text-amber-400" />
-                    <div>
-                      <div className="text-white font-medium">Emergent Mode</div>
-                      <div className="text-sm text-slate-400">Faster processing (+30% credits)</div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={emergentMode}
-                    onCheckedChange={setEmergentMode}
-                    data-testid="emergent-mode-toggle"
-                  />
-                </div>
+                <EmergentModeCard
+                  emergentMode={emergentMode}
+                  onToggle={setEmergentMode}
+                  testId="emergent-mode-toggle"
+                />
 
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-slate-400">Credits needed:</span>
