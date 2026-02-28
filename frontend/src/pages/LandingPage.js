@@ -149,15 +149,15 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Emergent Mode Section */}
+      {/* Premium Mode Section */}
       <section className="container mx-auto px-6 py-20">
         <div className="glass-effect rounded-2xl p-12 border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/20 mb-6">
             <Zap className="w-8 h-8 text-amber-400" />
           </div>
-          <h2 className="text-4xl font-bold mb-4">Emergent Mode</h2>
+          <h2 className="text-4xl font-bold mb-4">Premium Mode</h2>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-6">
-            Need results fast? Activate Emergent Mode for priority processing and faster, more concise outputs. Perfect for last-minute deadlines.
+            Need results fast? Activate Premium Mode for priority processing and faster, more concise outputs. Perfect for last-minute deadlines.
           </p>
           <div className="inline-flex items-center space-x-2 text-amber-400 font-medium">
             <TrendingUp className="w-5 h-5" />
@@ -190,7 +190,7 @@ const LandingPage = () => {
                 </li>
                 <li className="flex items-center text-slate-300">
                   <Check className="w-5 h-5 text-emerald-400 mr-2" />
-                  Emergent Mode access
+                  Premium Mode access
                 </li>
               </ul>
               <Link to="/auth">

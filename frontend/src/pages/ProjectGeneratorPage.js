@@ -18,7 +18,7 @@ const ProjectGeneratorPage = ({ user, onLogout, updateCredits }) => {
   const { loading, result, historyId, generate } = useAIGeneration();
   const { download } = useDownload();
 
-  const creditsNeeded = emergentMode ? 33 : 25;
+  const creditsNeeded = emergentMode ? 10 : 8;
 
   const handleGenerate = async () => {
     if (!topic.trim()) {

@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -18,10 +19,10 @@ const ReferralSection = ({ user }) => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
       const response = await axios.get(`${API_URL}/api/referrals/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        headers: { Authorization: `Bearer ${session.access_token}` }
       });
       setStats(response.data);
     } catch (error) {

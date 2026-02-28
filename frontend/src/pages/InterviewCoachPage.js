@@ -17,7 +17,7 @@ const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
 
   const { loading, result, generate } = useAIGeneration();
 
-  const creditsNeeded = emergentMode ? 20 : 15;
+  const creditsNeeded = emergentMode ? 4 : 3;
 
   const questionTypes = [
     'Tell me about yourself',

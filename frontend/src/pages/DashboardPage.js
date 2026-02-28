@@ -5,6 +5,7 @@ import ReferralSection from '../components/ReferralSection';
 import { FileText, Lightbulb, Languages, MessageCircle, ArrowRight, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -18,9 +19,10 @@ const DashboardPage = ({ user, onLogout }) => {
 
   const fetchHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
       const response = await axios.get(`${API_URL}/api/history`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${session.access_token}` }
       });
       setHistory(response.data.slice(0, 5));
     } catch (error) {
@@ -39,7 +41,7 @@ const DashboardPage = ({ user, onLogout }) => {
       gradient: 'from-violet-500/20 to-purple-500/20',
       iconBg: 'bg-violet-500/20',
       iconColor: 'text-violet-400',
-      credits: 20
+      credits: 5
     },
     {
       title: 'Project Generator',
@@ -49,7 +51,7 @@ const DashboardPage = ({ user, onLogout }) => {
       gradient: 'from-pink-500/20 to-rose-500/20',
       iconBg: 'bg-pink-500/20',
       iconColor: 'text-pink-400',
-      credits: 25
+      credits: 8
     },
     {
       title: 'English Improver',
@@ -59,7 +61,7 @@ const DashboardPage = ({ user, onLogout }) => {
       gradient: 'from-blue-500/20 to-cyan-500/20',
       iconBg: 'bg-blue-500/20',
       iconColor: 'text-blue-400',
-      credits: 10
+      credits: 2
     },
     {
       title: 'Interview Coach',
@@ -69,7 +71,7 @@ const DashboardPage = ({ user, onLogout }) => {
       gradient: 'from-emerald-500/20 to-teal-500/20',
       iconBg: 'bg-emerald-500/20',
       iconColor: 'text-emerald-400',
-      credits: 15
+      credits: 3
     }
   ];
 

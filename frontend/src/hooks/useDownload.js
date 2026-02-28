@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -17,11 +18,16 @@ const useDownload = () => {
   const download = async (historyId, format, prefix) => {
     if (!historyId) return;
     try {
-      const token = localStorage.getItem('token');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please sign in to continue');
+        return;
+      }
+
       const response = await axios.get(
         `${API_URL}/api/download/${historyId}/${format}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${session.access_token}` },
           responseType: 'blob'
         }
       );

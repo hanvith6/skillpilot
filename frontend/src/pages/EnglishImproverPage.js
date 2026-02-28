@@ -15,7 +15,7 @@ const EnglishImproverPage = ({ user, onLogout, updateCredits }) => {
 
   const { loading, result, generate } = useAIGeneration();
 
-  const creditsNeeded = emergentMode ? 13 : 10;
+  const creditsNeeded = emergentMode ? 3 : 2;
 
   const handleGenerate = async () => {
     if (!text.trim()) {

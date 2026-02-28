@@ -20,7 +20,7 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
   const { loading, result, historyId, generate } = useAIGeneration();
   const { download } = useDownload();
 
-  const creditsNeeded = emergentMode ? 26 : 20;
+  const creditsNeeded = emergentMode ? 7 : 5;
 
   const handleGenerate = async () => {
     if (!resumeText.trim() || !targetRole.trim()) {

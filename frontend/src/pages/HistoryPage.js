@@ -4,6 +4,7 @@ import { FileText, Lightbulb, Languages, MessageCircle, Download } from 'lucide-
 import { Button } from '../components/ui/button';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -17,9 +18,10 @@ const HistoryPage = ({ user, onLogout }) => {
 
   const fetchHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
       const response = await axios.get(`${API_URL}/api/history`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${session.access_token}` }
       });
       setHistory(response.data);
     } catch (error) {

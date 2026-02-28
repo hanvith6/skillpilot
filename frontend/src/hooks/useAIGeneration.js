@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -25,11 +26,16 @@ const useAIGeneration = () => {
   const generate = async ({ endpoint, payload, user, updateCredits, successMessage, extractResult }) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please sign in to continue');
+        return;
+      }
+
       const response = await axios.post(
         `${API_URL}${endpoint}`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
       );
 
       const data = extractResult ? extractResult(response.data) : response.data.data;
