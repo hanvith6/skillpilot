@@ -1,5 +1,5 @@
 from fastapi import Request, HTTPException
-from app.db import get_db
+from app.db import get_db, get_auth_client
 import logging
 import asyncio
 
@@ -15,12 +15,16 @@ async def get_current_user(request: Request) -> dict:
     token = auth_header.split(" ")[1]
 
     try:
-        db = get_db()
-        user_response = db.auth.get_user(token)
+        # Use anon client for auth verification (doesn't pollute service client state)
+        auth_client = get_auth_client()
+        user_response = auth_client.auth.get_user(token)
         if not user_response or not user_response.user:
             raise HTTPException(status_code=401, detail="Invalid token")
 
         user_id = str(user_response.user.id)
+
+        # Use service client for data operations (bypasses RLS)
+        db = get_db()
 
         # Retry profile fetch — the DB trigger may not have completed yet
         # on brand-new signups

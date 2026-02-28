@@ -13,6 +13,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/generate", tags=["generation"])
 
 
+def _handle_generation_error(e: Exception, tool_name: str):
+    """Map generation exceptions to proper HTTP responses."""
+    error_str = str(e).lower()
+    logger.error(f"{tool_name} generation error: {e}")
+    if any(kw in error_str for kw in ("rate", "limit", "429", "quota", "resource_exhausted")):
+        raise HTTPException(status_code=429, detail="AI service is busy. Please try again in a minute.")
+    raise HTTPException(status_code=500, detail="Generation failed. Please try again.")
+
+
 @router.post("/resume")
 async def generate_resume(request: ResumeRequest, current_user: dict = Depends(get_current_user)):
     credits_needed = calculate_credits_needed("resume", request.emergent_mode)
@@ -27,11 +36,10 @@ async def generate_resume(request: ResumeRequest, current_user: dict = Depends(g
     })
 
     temperature = 0.3 if request.emergent_mode else 0.7
-    max_tokens = 1500 if request.emergent_mode else 2000
 
     try:
         llm = get_llm_router()
-        result = await llm.generate(prompt, temperature, max_tokens)
+        result = await llm.generate(prompt, temperature, 3000)
         result = filter_output(result)
         result_json = parse_json_result(result, {
             "summary": result, "skills": [], "experience": [], "education": [], "projects": [], "keywords": []
@@ -46,8 +54,7 @@ async def generate_resume(request: ResumeRequest, current_user: dict = Depends(g
             "credits_used": credits_needed, "history_id": history_id
         }
     except Exception as e:
-        logger.error(f"Resume generation error: {e}")
-        raise HTTPException(status_code=500, detail="Generation failed")
+        _handle_generation_error(e, "Resume")
 
 
 @router.post("/project")
@@ -63,11 +70,10 @@ async def generate_project(request: ProjectRequest, current_user: dict = Depends
     })
 
     temperature = 0.3 if request.emergent_mode else 0.7
-    max_tokens = 1500 if request.emergent_mode else 2000
 
     try:
         llm = get_llm_router()
-        result = await llm.generate(prompt, temperature, max_tokens)
+        result = await llm.generate(prompt, temperature, 4000)
         result = filter_output(result)
         result_json = parse_json_result(result, {
             "abstract": result, "problem_statement": "", "objectives": [], "modules": []
@@ -81,8 +87,7 @@ async def generate_project(request: ProjectRequest, current_user: dict = Depends
             "credits_used": credits_needed, "history_id": history_id
         }
     except Exception as e:
-        logger.error(f"Project generation error: {e}")
-        raise HTTPException(status_code=500, detail="Generation failed")
+        _handle_generation_error(e, "Project")
 
 
 @router.post("/english")
@@ -95,11 +100,10 @@ async def generate_english(request: EnglishRequest, current_user: dict = Depends
     prompt = build_safe_prompt(ENGLISH_PROMPT, {"text": request.text})
 
     temperature = 0.3 if request.emergent_mode else 0.7
-    max_tokens = 1500 if request.emergent_mode else 2000
 
     try:
         llm = get_llm_router()
-        result = await llm.generate(prompt, temperature, max_tokens)
+        result = await llm.generate(prompt, temperature, 2000)
         result = filter_output(result)
         result_json = parse_json_result(result, {
             "formal": result, "semi_formal": result, "simple": result
@@ -113,8 +117,7 @@ async def generate_english(request: EnglishRequest, current_user: dict = Depends
             "credits_used": credits_needed, "history_id": history_id
         }
     except Exception as e:
-        logger.error(f"English generation error: {e}")
-        raise HTTPException(status_code=500, detail="Generation failed")
+        _handle_generation_error(e, "English")
 
 
 @router.post("/interview")
@@ -130,11 +133,10 @@ async def generate_interview(request: InterviewRequest, current_user: dict = Dep
     })
 
     temperature = 0.3 if request.emergent_mode else 0.7
-    max_tokens = 1500 if request.emergent_mode else 2000
 
     try:
         llm = get_llm_router()
-        result = await llm.generate(prompt, temperature, max_tokens)
+        result = await llm.generate(prompt, temperature, 2000)
         result = filter_output(result)
         result_json = parse_json_result(result, {
             "answer": result, "delivery_notes": ""
@@ -148,5 +150,4 @@ async def generate_interview(request: InterviewRequest, current_user: dict = Dep
             "credits_used": credits_needed, "history_id": history_id
         }
     except Exception as e:
-        logger.error(f"Interview generation error: {e}")
-        raise HTTPException(status_code=500, detail="Generation failed")
+        _handle_generation_error(e, "Interview")

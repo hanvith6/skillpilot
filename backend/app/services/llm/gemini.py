@@ -20,12 +20,13 @@ class GeminiProvider(LLMProvider):
 
     async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int = 2000) -> str:
         client = self._get_client()
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=self._model,
             contents=prompt,
             config=genai.types.GenerateContentConfig(
                 temperature=temperature,
-                max_output_tokens=max_tokens
+                max_output_tokens=max_tokens,
+                response_mime_type="application/json",
             )
         )
         return response.text

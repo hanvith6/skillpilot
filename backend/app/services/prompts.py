@@ -160,13 +160,55 @@ def build_safe_prompt(template: str, user_inputs: dict) -> str:
     return f"{SYSTEM_PREAMBLE}\n\n{formatted}"
 
 
+def _repair_json(text: str) -> str:
+    """Attempt to fix common JSON issues from LLM output."""
+    # Remove trailing commas before } or ]
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+    # Try to close truncated JSON (count unmatched braces/brackets)
+    opens = text.count('{') - text.count('}')
+    brackets = text.count('[') - text.count(']')
+    if opens > 0 or brackets > 0:
+        # Truncate to last complete value and close
+        text = text.rstrip().rstrip(',')
+        text += ']' * brackets + '}' * opens
+    return text
+
+
 def parse_json_result(result: str, fallback: dict) -> dict:
     """Parse JSON from LLM output, returning fallback on failure."""
     try:
         cleaned = result.strip()
-        cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
-        cleaned = re.sub(r'\s*```$', '', cleaned)
-        return json.loads(cleaned)
+        # Strip markdown code fences (```json ... ``` or ``` ... ```)
+        cleaned = re.sub(r'^```(?:json)?\s*\n?', '', cleaned)
+        cleaned = re.sub(r'\n?\s*```\s*$', '', cleaned)
+        cleaned = cleaned.strip()
+
+        # Try direct parse first
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+
+        # Try with JSON repair (trailing commas, unclosed braces)
+        try:
+            return json.loads(_repair_json(cleaned))
+        except json.JSONDecodeError:
+            pass
+
+        # Try to extract JSON object from surrounding text
+        match = re.search(r'\{[\s\S]*\}', cleaned)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                # Try repair on extracted JSON
+                try:
+                    return json.loads(_repair_json(match.group(0)))
+                except json.JSONDecodeError:
+                    pass
+
+        logger.warning(f"No JSON found in LLM output (first 200 chars): {cleaned[:200]}")
+        return fallback
     except Exception as e:
         logger.warning(f"JSON parse failed: {e}")
         return fallback

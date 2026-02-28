@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from app.db import get_db
+from app.db import get_db, get_auth_client
 from app.services.auth import get_current_user
 from app.models.user import UserSignup, UserLogin, Profile, ReferralStats
 from app.config import settings
@@ -15,15 +15,16 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/signup")
 async def signup(user_data: UserSignup):
     db = get_db()
+    auth_client = get_auth_client()
 
     # Check if email exists
     existing = db.table("profiles").select("id").eq("email", user_data.email).execute()
     if existing.data:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Sign up via Supabase Auth
+    # Sign up via Supabase Auth (use anon client to avoid polluting service client)
     try:
-        auth_response = db.auth.sign_up({
+        auth_response = auth_client.auth.sign_up({
             "email": user_data.email,
             "password": user_data.password,
             "options": {
@@ -95,9 +96,10 @@ async def signup(user_data: UserSignup):
 @router.post("/login")
 async def login(credentials: UserLogin):
     db = get_db()
+    auth_client = get_auth_client()
 
     try:
-        auth_response = db.auth.sign_in_with_password({
+        auth_response = auth_client.auth.sign_in_with_password({
             "email": credentials.email,
             "password": credentials.password,
         })

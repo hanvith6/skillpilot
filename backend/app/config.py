@@ -14,11 +14,11 @@ class Settings(BaseSettings):
     PRIMARY_LLM: str = "gemini"
 
     # Payments
-    RAZORPAY_KEY_ID: str
-    RAZORPAY_KEY_SECRET: str
-    STRIPE_SECRET_KEY: str
-    STRIPE_PUBLISHABLE_KEY: str
-    STRIPE_WEBHOOK_SECRET: str
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
 
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000"
