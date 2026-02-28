@@ -24,6 +24,7 @@ from reportlab.lib import colors
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+import json
 
 
 ROOT_DIR = Path(__file__).parent
@@ -330,6 +331,32 @@ def call_gemini(prompt: str, emergent_mode: bool = False) -> str:
         )
     )
     return response.text
+
+def parse_json_result(result: str, fallback: dict) -> dict:
+    """Parse JSON from Gemini output, returning fallback dict on failure."""
+    try:
+        return json.loads(result.strip().replace('```json', '').replace('```', ''))
+    except Exception as e:
+        logger.warning(f"JSON parse failed, using fallback: {e}")
+        return fallback
+
+async def save_generation(user_id: str, gen_type: str, title: str, content: dict, credits_needed: int) -> str:
+    """Deduct credits from user, save generation history, and return history ID."""
+    await db.users.update_one(
+        {"id": user_id},
+        {"$inc": {"credits": -credits_needed}}
+    )
+    history = GenerationHistory(
+        user_id=user_id,
+        type=gen_type,
+        title=title,
+        content=content,
+        credits_used=credits_needed
+    )
+    history_dict = history.model_dump()
+    history_dict['created_at'] = history_dict['created_at'].isoformat()
+    await db.generation_history.insert_one(history_dict)
+    return history.id
 
 def generate_pdf(content: Dict[str, Any], doc_type: str) -> BytesIO:
     """Generate PDF document"""
@@ -644,31 +671,9 @@ async def generate_resume(request: ResumeRequest, current_user: User = Depends(g
     
     try:
         result = call_gemini(prompt, request.emergent_mode)
-        
-        import json
-        try:
-            result_json = json.loads(result.strip().replace('```json', '').replace('```', ''))
-        except:
-            result_json = {"summary": result, "skills": [], "experience": [], "education": [], "projects": []}
-        
-        await db.users.update_one(
-            {"id": current_user.id},
-            {"$inc": {"credits": -credits_needed}}
-        )
-        
-        history = GenerationHistory(
-            user_id=current_user.id,
-            type="Resume",
-            title=f"{request.target_role} - {request.country}",
-            content=result_json,
-            credits_used=credits_needed
-        )
-        history_dict = history.model_dump()
-        history_dict['created_at'] = history_dict['created_at'].isoformat()
-        await db.generation_history.insert_one(history_dict)
-        
-        return {"success": True, "data": result_json, "credits_used": credits_needed, "history_id": history.id}
-    
+        result_json = parse_json_result(result, {"summary": result, "skills": [], "experience": [], "education": [], "projects": []})
+        history_id = await save_generation(current_user.id, "Resume", f"{request.target_role} - {request.country}", result_json, credits_needed)
+        return {"success": True, "data": result_json, "credits_used": credits_needed, "history_id": history_id}
     except Exception as e:
         logger.error(f"Resume generation error: {e}")
         raise HTTPException(status_code=500, detail="Generation failed")
@@ -684,31 +689,9 @@ async def generate_project(request: ProjectRequest, current_user: User = Depends
     
     try:
         result = call_gemini(prompt, request.emergent_mode)
-        
-        import json
-        try:
-            result_json = json.loads(result.strip().replace('```json', '').replace('```', ''))
-        except:
-            result_json = {"abstract": result, "problem_statement": "", "objectives": [], "modules": []}
-        
-        await db.users.update_one(
-            {"id": current_user.id},
-            {"$inc": {"credits": -credits_needed}}
-        )
-        
-        history = GenerationHistory(
-            user_id=current_user.id,
-            type="Project",
-            title=request.topic,
-            content=result_json,
-            credits_used=credits_needed
-        )
-        history_dict = history.model_dump()
-        history_dict['created_at'] = history_dict['created_at'].isoformat()
-        await db.generation_history.insert_one(history_dict)
-        
-        return {"success": True, "data": result_json, "credits_used": credits_needed, "history_id": history.id}
-    
+        result_json = parse_json_result(result, {"abstract": result, "problem_statement": "", "objectives": [], "modules": []})
+        history_id = await save_generation(current_user.id, "Project", request.topic, result_json, credits_needed)
+        return {"success": True, "data": result_json, "credits_used": credits_needed, "history_id": history_id}
     except Exception as e:
         logger.error(f"Project generation error: {e}")
         raise HTTPException(status_code=500, detail="Generation failed")
@@ -724,31 +707,9 @@ async def generate_english(request: EnglishRequest, current_user: User = Depends
     
     try:
         result = call_gemini(prompt, request.emergent_mode)
-        
-        import json
-        try:
-            result_json = json.loads(result.strip().replace('```json', '').replace('```', ''))
-        except:
-            result_json = {"formal": result, "semi_formal": result, "simple": result}
-        
-        await db.users.update_one(
-            {"id": current_user.id},
-            {"$inc": {"credits": -credits_needed}}
-        )
-        
-        history = GenerationHistory(
-            user_id=current_user.id,
-            type="English",
-            title="Text Improvement",
-            content=result_json,
-            credits_used=credits_needed
-        )
-        history_dict = history.model_dump()
-        history_dict['created_at'] = history_dict['created_at'].isoformat()
-        await db.generation_history.insert_one(history_dict)
-        
-        return {"success": True, "data": result_json, "credits_used": credits_needed, "history_id": history.id}
-    
+        result_json = parse_json_result(result, {"formal": result, "semi_formal": result, "simple": result})
+        history_id = await save_generation(current_user.id, "English", "Text Improvement", result_json, credits_needed)
+        return {"success": True, "data": result_json, "credits_used": credits_needed, "history_id": history_id}
     except Exception as e:
         logger.error(f"English generation error: {e}")
         raise HTTPException(status_code=500, detail="Generation failed")
@@ -767,25 +728,8 @@ async def generate_interview(request: InterviewRequest, current_user: User = Dep
     
     try:
         result = call_gemini(prompt, request.emergent_mode)
-        
-        await db.users.update_one(
-            {"id": current_user.id},
-            {"$inc": {"credits": -credits_needed}}
-        )
-        
-        history = GenerationHistory(
-            user_id=current_user.id,
-            type="Interview",
-            title=request.question_type,
-            content={"answer": result},
-            credits_used=credits_needed
-        )
-        history_dict = history.model_dump()
-        history_dict['created_at'] = history_dict['created_at'].isoformat()
-        await db.generation_history.insert_one(history_dict)
-        
-        return {"success": True, "data": {"answer": result}, "credits_used": credits_needed, "history_id": history.id}
-    
+        history_id = await save_generation(current_user.id, "Interview", request.question_type, {"answer": result}, credits_needed)
+        return {"success": True, "data": {"answer": result}, "credits_used": credits_needed, "history_id": history_id}
     except Exception as e:
         logger.error(f"Interview generation error: {e}")
         raise HTTPException(status_code=500, detail="Generation failed")
