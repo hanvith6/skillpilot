@@ -10,8 +10,6 @@ from app.db import get_db
 from app.config import settings
 import razorpay
 import logging
-import uuid
-from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["payments"])

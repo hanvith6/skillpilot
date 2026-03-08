@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { FileText, Lightbulb, Languages, MessageCircle, Download, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -15,6 +16,9 @@ const HistoryPage = ({ user, onLogout }) => {
   const [expanded, setExpanded] = useState(null);
   const [copied, setCopied] = useState(null);
   const { download } = useDownload();
+  const [searchParams] = useSearchParams();
+  const openItemRef = useRef(null);
+  const hasScrolled = useRef(false);
 
   const handleDownload = (historyId, format, type) => {
     download(historyId, format, type.toLowerCase());
@@ -139,7 +143,22 @@ const HistoryPage = ({ user, onLogout }) => {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-expand item from URL param (e.g., ?open=uuid)
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (openId && history.length > 0 && !hasScrolled.current) {
+      setExpanded(openId);
+      hasScrolled.current = true;
+      // Scroll to the item after a brief delay for DOM render
+      setTimeout(() => {
+        if (openItemRef.current) {
+          openItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [history, searchParams]);
 
   const fetchHistory = async () => {
     try {
@@ -163,6 +182,16 @@ const HistoryPage = ({ user, onLogout }) => {
       case 'English': return Languages;
       case 'Interview': return MessageCircle;
       default: return FileText;
+    }
+  };
+
+  const getTypeStyle = (type) => {
+    switch (type) {
+      case 'Resume': return { bg: 'bg-violet-500/20', color: 'text-violet-400' };
+      case 'Project': return { bg: 'bg-pink-500/20', color: 'text-pink-400' };
+      case 'English': return { bg: 'bg-blue-500/20', color: 'text-blue-400' };
+      case 'Interview': return { bg: 'bg-emerald-500/20', color: 'text-emerald-400' };
+      default: return { bg: 'bg-violet-500/20', color: 'text-violet-400' };
     }
   };
 
@@ -191,11 +220,13 @@ const HistoryPage = ({ user, onLogout }) => {
           <div className="space-y-3">
             {history.map((item, index) => {
               const Icon = getIcon(item.type);
+              const typeStyle = getTypeStyle(item.type);
               const isExpanded = expanded === item.id;
               const isDownloadable = item.type === 'Resume' || item.type === 'Project';
               const isCopyable = item.type === 'English' || item.type === 'Interview';
               return (
                 <div key={item.id || index}
+                  ref={item.id === searchParams.get('open') ? openItemRef : null}
                   className="glass-effect rounded-xl border border-white/10 overflow-hidden"
                   data-testid={`history-item-${index}`}
                 >
@@ -205,13 +236,13 @@ const HistoryPage = ({ user, onLogout }) => {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4 flex-1">
-                        <div className="w-12 h-12 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-6 h-6 text-violet-400" />
+                        <div className={`w-12 h-12 rounded-lg ${typeStyle.bg} flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-6 h-6 ${typeStyle.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-white font-medium truncate">{item.title}</h4>
                           <div className="flex items-center space-x-3 text-sm text-slate-400">
-                            <span>{item.type}</span>
+                            <span className={typeStyle.color}>{item.type}</span>
                             <span>•</span>
                             <span>{formatDate(item.created_at)}</span>
                             <span>•</span>

@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ReferralSection from '../components/ReferralSection';
-import { FileText, Lightbulb, Languages, MessageCircle, ArrowRight, Zap, TrendingUp } from 'lucide-react';
+import { FileText, Lightbulb, Languages, MessageCircle, ArrowRight, Zap, TrendingUp, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+const TOOL_CONFIG = {
+  Resume: { icon: FileText, color: 'text-violet-400', bg: 'bg-violet-500/20', barColor: 'bg-gradient-to-r from-violet-500 to-violet-600', label: 'Resume' },
+  Project: { icon: Lightbulb, color: 'text-pink-400', bg: 'bg-pink-500/20', barColor: 'bg-gradient-to-r from-pink-500 to-pink-600', label: 'Project' },
+  English: { icon: Languages, color: 'text-blue-400', bg: 'bg-blue-500/20', barColor: 'bg-gradient-to-r from-blue-500 to-blue-600', label: 'English' },
+  Interview: { icon: MessageCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/20', barColor: 'bg-gradient-to-r from-emerald-500 to-emerald-600', label: 'Interview' },
+};
+
 const DashboardPage = ({ user, onLogout }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchHistory();
@@ -47,15 +54,6 @@ const DashboardPage = ({ user, onLogout }) => {
       console.error('Failed to fetch stats:', error);
     }
   };
-
-  const CHART_COLORS = { resume: '#8b5cf6', project: '#ec4899', english: '#3b82f6', interview: '#10b981' };
-  const CHART_LABELS = { resume: 'Resume', project: 'Project', english: 'English', interview: 'Interview' };
-
-  const chartData = stats?.breakdown ? Object.entries(stats.breakdown).map(([key, value]) => ({
-    name: CHART_LABELS[key] || key,
-    value,
-    color: CHART_COLORS[key] || '#6b7280',
-  })) : [];
 
   const tools = [
     {
@@ -105,10 +103,16 @@ const DashboardPage = ({ user, onLogout }) => {
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
 
-    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-    return `${Math.floor(diff / 86400)} days ago`;
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
+
+  // Build chart data from stats breakdown
+  const breakdown = stats?.breakdown || {};
+  const totalUses = Object.values(breakdown).reduce((sum, v) => sum + v, 0);
 
   return (
     <Layout user={user} onLogout={onLogout}>
@@ -157,45 +161,47 @@ const DashboardPage = ({ user, onLogout }) => {
           </div>
         </div>
 
-        {/* Credit Usage Chart */}
-        {chartData.length > 0 && (
+        {/* Credit Usage Breakdown */}
+        {totalUses > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-4">Credit Usage</h2>
             <div className="glass-effect rounded-xl p-6 border border-white/10">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="w-48 h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={index} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-                        formatter={(value, name) => [`${value} uses`, name]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex-1 grid grid-cols-2 gap-3">
-                  {chartData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-sm text-slate-300">{item.name}</span>
-                      <span className="text-sm text-slate-500 ml-auto">{item.value}</span>
+              <div className="space-y-4">
+                {Object.entries(TOOL_CONFIG).map(([key, config]) => {
+                  const count = breakdown[key] || 0;
+                  const percentage = totalUses > 0 ? (count / totalUses) * 100 : 0;
+                  const Icon = config.icon;
+                  return (
+                    <div key={key} className="group">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg ${config.bg} flex items-center justify-center`}>
+                            <Icon className={`w-4 h-4 ${config.color}`} />
+                          </div>
+                          <span className="text-sm font-medium text-slate-200">{config.label}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-slate-400">{count} {count === 1 ? 'use' : 'uses'}</span>
+                          <span className="text-xs text-slate-500 w-12 text-right">{Math.round(percentage)}%</span>
+                        </div>
+                      </div>
+                      <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${config.barColor} transition-all duration-500`}
+                          style={{ width: `${Math.max(percentage, percentage > 0 ? 4 : 0)}%` }}
+                        />
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
+              {stats?.most_used_tool && (
+                <div className="mt-5 pt-4 border-t border-white/5">
+                  <p className="text-sm text-slate-400">
+                    Most used: <span className="text-white font-medium">{stats.most_used_tool}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -251,26 +257,38 @@ const DashboardPage = ({ user, onLogout }) => {
             </div>
           ) : (
             <div className="space-y-3">
-              {history.map((item, index) => (
-                <div key={item.id || index} className="glass-effect glass-effect-hover rounded-xl p-4 border border-white/10" data-testid={`history-item-${index}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-violet-400" />
-                      </div>
-                      <div>
-                        <h4 className="text-white font-medium">{item.title}</h4>
-                        <div className="flex items-center space-x-3 text-sm text-slate-400">
-                          <span>{item.type}</span>
-                          <span>•</span>
-                          <span>{formatDate(item.created_at)}</span>
+              {history.map((item, index) => {
+                const config = TOOL_CONFIG[item.type] || TOOL_CONFIG.Resume;
+                const Icon = config.icon;
+                return (
+                  <div
+                    key={item.id || index}
+                    className="glass-effect glass-effect-hover rounded-xl p-4 border border-white/10 cursor-pointer hover:border-white/20 transition-all duration-200"
+                    data-testid={`history-item-${index}`}
+                    onClick={() => navigate(`/history?open=${item.id}`)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1 min-w-0">
+                        <div className={`w-10 h-10 rounded-lg ${config.bg} flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-5 h-5 ${config.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white font-medium truncate">{item.title}</h4>
+                          <div className="flex items-center space-x-3 text-sm text-slate-400">
+                            <span className={config.color}>{config.label}</span>
+                            <span>·</span>
+                            <span>{formatDate(item.created_at)}</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                        <span className="text-sm text-slate-500">{item.credits_used} cr</span>
+                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-400">{item.credits_used} credits</div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

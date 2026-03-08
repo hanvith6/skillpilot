@@ -11,6 +11,7 @@ import InterviewCoachPage from './pages/InterviewCoachPage';
 import PurchaseCreditsPage from './pages/PurchaseCreditsPage';
 import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { supabase } from './lib/supabase';
 import axios from 'axios';
@@ -20,6 +21,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fetchingRef = React.useRef(false);
 
   useEffect(() => {
     // Check initial session
@@ -38,9 +40,10 @@ function App() {
 
     initAuth();
 
-    // Listen for auth state changes
+    // Listen for auth state changes (skip INITIAL_SESSION since initAuth handles it)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'INITIAL_SESSION') return;
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         await fetchProfile(session.access_token);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -51,6 +54,9 @@ function App() {
   }, []);
 
   const fetchProfile = async (token) => {
+    // Prevent concurrent duplicate fetches
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     try {
       const response = await axios.get(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -59,6 +65,8 @@ function App() {
     } catch (error) {
       console.error('Failed to fetch profile:', error);
       setUser(null);
+    } finally {
+      fetchingRef.current = false;
     }
   };
 
@@ -98,14 +106,14 @@ function App() {
           <Route path="/" element={user ? <Navigate to="/dashboard" /> : <LandingPage />} />
           <Route path="/auth" element={user ? <Navigate to="/dashboard" /> : <AuthPage onLogin={handleLogin} />} />
           <Route path="/auth/callback" element={<AuthCallback onLogin={handleLogin} />} />
-          <Route path="/dashboard" element={user ? <DashboardPage user={user} onLogout={handleLogout} /> : <Navigate to="/auth" />} />
-          <Route path="/resume-builder" element={user ? <ResumeBuilderPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
-          <Route path="/project-generator" element={user ? <ProjectGeneratorPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
-          <Route path="/english-improver" element={user ? <EnglishImproverPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
-          <Route path="/interview-coach" element={user ? <InterviewCoachPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
-          <Route path="/purchase" element={user ? <PurchaseCreditsPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
-          <Route path="/history" element={user ? <HistoryPage user={user} onLogout={handleLogout} /> : <Navigate to="/auth" />} />
-          <Route path="/profile" element={user ? <ProfilePage user={user} onLogout={handleLogout} updateUser={updateUser} /> : <Navigate to="/auth" />} />
+          <Route path="/dashboard" element={user ? <ErrorBoundary><DashboardPage user={user} onLogout={handleLogout} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/resume-builder" element={user ? <ErrorBoundary><ResumeBuilderPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/project-generator" element={user ? <ErrorBoundary><ProjectGeneratorPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/english-improver" element={user ? <ErrorBoundary><EnglishImproverPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/interview-coach" element={user ? <ErrorBoundary><InterviewCoachPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/purchase" element={user ? <ErrorBoundary><PurchaseCreditsPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/history" element={user ? <ErrorBoundary><HistoryPage user={user} onLogout={handleLogout} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/profile" element={user ? <ErrorBoundary><ProfilePage user={user} onLogout={handleLogout} updateUser={updateUser} /></ErrorBoundary> : <Navigate to="/auth" />} />
           <Route path="*" element={
             <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-center px-4">
               <h1 className="text-6xl font-bold text-white mb-4">404</h1>

@@ -1,4 +1,4 @@
-# SkillMate AI
+# SkillPilot
 
 AI-powered career toolkit for engineering students. Generate optimized resumes, project ideas, improved English writing, and interview answers using LLM technology.
 
@@ -40,7 +40,7 @@ backend/                Python FastAPI
 | Database | Supabase (PostgreSQL) with Row Level Security |
 | Auth | Supabase Auth (Google OAuth + email/password) |
 | LLM | Google Gemini (primary) + OpenAI (fallback) |
-| Payments | Razorpay (India) + Stripe (global) with geo-detection |
+| Payments | Razorpay (INR + USD) — Stripe dormant |
 | Deployment | Vercel (frontend) + Railway (backend) |
 
 ## Database Schema
@@ -131,7 +131,7 @@ STRIPE_WEBHOOK_SECRET=    # Optional
 REACT_APP_BACKEND_URL=          # http://localhost:8000
 REACT_APP_SUPABASE_URL=         # https://xxx.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=    # Anon/public key
-REACT_APP_STRIPE_PUBLISHABLE_KEY= # Optional
+REACT_APP_STRIPE_PUBLISHABLE_KEY= # Dormant (Stripe disabled in UI)
 ```
 
 ## Deployment

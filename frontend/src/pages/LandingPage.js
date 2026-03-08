@@ -220,6 +220,11 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="container mx-auto px-6 py-8 border-t border-white/5 text-center text-slate-500 text-sm">
         <p>© 2026 SkillPilot. Powered by Google Gemini. Built for engineering students worldwide.</p>
+        <p className="mt-2">Crafted with <span className="text-red-400">❤</span> by{' '}
+          <a href="https://www.linkedin.com/in/hanvith-reddy-a67857252/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors">
+            Hanvith Reddy B
+          </a>
+        </p>
       </footer>
     </div>
   );

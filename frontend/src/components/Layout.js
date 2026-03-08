@@ -29,10 +29,11 @@ const Layout = ({ children, user, onLogout }) => {
           </div>
           <span className="font-bold text-white text-lg">SkillPilot</span>
         </div>
-        <button 
-          onClick={() => setSidebarOpen(true)} 
+        <button
+          onClick={() => setSidebarOpen(true)}
           className="p-2 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
           data-testid="mobile-menu-button"
+          aria-label="Open menu"
         >
           <Menu size={24} />
         </button>
@@ -49,7 +50,7 @@ const Layout = ({ children, user, onLogout }) => {
               </div>
               <span className="font-bold text-white text-lg">SkillPilot</span>
             </Link>
-            <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-slate-400 hover:text-white" data-testid="close-sidebar-button">
+            <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-slate-400 hover:text-white" data-testid="close-sidebar-button" aria-label="Close menu">
               <X size={20} />
             </button>
           </div>

@@ -1,12 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
 from app.db import get_db, get_auth_client
 from app.services.auth import get_current_user
-from app.models.user import UserSignup, UserLogin, Profile, ReferralStats
-from app.config import settings
+from app.models.user import UserSignup, UserLogin
 import logging
-import uuid
-from datetime import datetime, timezone
+import asyncio
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -40,16 +37,27 @@ async def signup(user_data: UserSignup):
 
     user_id = str(auth_response.user.id)
 
+    # Wait for the DB trigger to create the profile
+    profile = None
+    for attempt in range(5):
+        result = db.table("profiles").select("*").eq("id", user_id).maybe_single().execute()
+        if result.data:
+            profile = result.data
+            break
+        await asyncio.sleep(0.5)
+
+    if not profile:
+        logger.error(f"Profile not created by trigger for user {user_id}")
+        raise HTTPException(status_code=500, detail="Account creation in progress. Please try logging in.")
+
     # Handle referral code
-    bonus_credits = 0
     if user_data.referral_code:
         referrer = db.table("profiles").select("id").eq(
             "referral_code", user_data.referral_code.upper()
-        ).execute()
+        ).maybe_single().execute()
 
-        if referrer.data:
-            referrer_id = referrer.data[0]["id"]
-            bonus_credits = 20
+        if referrer and referrer.data:
+            referrer_id = referrer.data["id"]
 
             # Award referrer 50 credits
             referrer_profile = db.table("profiles").select("credits, total_referrals, referral_credits_earned").eq(
@@ -75,21 +83,17 @@ async def signup(user_data: UserSignup):
             # Update new user's referral info
             db.table("profiles").update({
                 "referred_by": referrer_id,
-                "credits": 100 + bonus_credits,
+                "credits": profile["credits"] + 20,
             }).eq("id", user_id).execute()
 
-    # If bonus credits but profile wasn't updated above (no referrer found)
-    if bonus_credits > 0:
-        pass  # Already handled above
-
-    # Get the profile
-    profile = db.table("profiles").select("*").eq("id", user_id).single().execute()
+    # Re-fetch the profile in case referral updated it
+    final_profile = db.table("profiles").select("*").eq("id", user_id).single().execute()
 
     token = auth_response.session.access_token if auth_response.session else ""
 
     return {
         "token": token,
-        "user": profile.data,
+        "user": final_profile.data,
     }
 
 

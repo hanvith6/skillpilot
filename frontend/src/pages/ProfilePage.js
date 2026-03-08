@@ -241,11 +241,19 @@ const ProfilePage = ({ user, onLogout, updateUser }) => {
       return;
     }
 
+    if (newEmail.toLowerCase() === user?.email?.toLowerCase()) {
+      toast.error('New email must be different from current email');
+      return;
+    }
+
     setSavingEmail(true);
     try {
       const { error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) throw error;
-      toast.success('Verification email sent to ' + newEmail + '. Please check your inbox.');
+      toast.success(
+        'Confirmation emails sent to both your current email (' + user?.email + ') and new email (' + newEmail + '). You must confirm from both to complete the change.',
+        { duration: 8000 }
+      );
       setNewEmail('');
       setShowEmailChange(false);
     } catch (error) {
@@ -387,34 +395,37 @@ const ProfilePage = ({ user, onLogout, updateUser }) => {
                     )}
                   </div>
                   {showEmailChange && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <Input
-                        type="email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        className="bg-slate-800/50 border-white/10 text-white max-w-xs"
-                        placeholder="New email address"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleEmailChange();
-                          if (e.key === 'Escape') { setShowEmailChange(false); setNewEmail(''); }
-                        }}
-                      />
-                      <Button
-                        size="sm"
-                        onClick={handleEmailChange}
-                        disabled={savingEmail}
-                        className="bg-violet-600 hover:bg-violet-700 text-white"
-                      >
-                        {savingEmail ? 'Sending...' : 'Update'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => { setShowEmailChange(false); setNewEmail(''); }}
-                        className="text-slate-400 hover:text-white"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="email"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          className="bg-slate-800/50 border-white/10 text-white max-w-xs"
+                          placeholder="New email address"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleEmailChange();
+                            if (e.key === 'Escape') { setShowEmailChange(false); setNewEmail(''); }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleEmailChange}
+                          disabled={savingEmail}
+                          className="bg-violet-600 hover:bg-violet-700 text-white"
+                        >
+                          {savingEmail ? 'Sending...' : 'Update'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => { setShowEmailChange(false); setNewEmail(''); }}
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1.5">You will need to confirm from both your current and new email addresses.</p>
                     </div>
                   )}
                 </div>
