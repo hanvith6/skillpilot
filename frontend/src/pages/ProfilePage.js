@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { User, Mail, Calendar, Zap, Edit3, Save, X, Lock, BarChart3, Check, FileText, Lightbulb, Languages, MessageCircle } from 'lucide-react';
+import { User, Mail, Calendar, Zap, Edit3, Save, X, Lock, BarChart3, Check, FileText, Lightbulb, Languages, MessageCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import axios from 'axios';
@@ -8,6 +8,14 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const PASSWORD_RULES = [
+  { label: 'At least 8 characters', test: (p) => p.length >= 8 },
+  { label: 'One uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { label: 'One lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { label: 'One number', test: (p) => /[0-9]/.test(p) },
+  { label: 'One special character (!@#$%^&*)', test: (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(p) },
+];
 
 // Pre-made avatar gradients
 const AVATARS = [
@@ -210,12 +218,19 @@ const ProfilePage = ({ user, onLogout, updateUser }) => {
     }
   };
 
+  const passwordStrength = PASSWORD_RULES.map((rule) => ({
+    ...rule,
+    passed: rule.test(newPassword),
+  }));
+  const allPasswordRulesPassed = passwordStrength.every((r) => r.passed);
+  const passwordsMatch = newPassword === confirmPassword && confirmPassword;
+
   const handlePasswordChange = async () => {
-    if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    if (!allPasswordRulesPassed) {
+      toast.error('Please meet all password requirements');
       return;
     }
-    if (newPassword !== confirmPassword) {
+    if (!passwordsMatch) {
       toast.error('Passwords do not match');
       return;
     }
@@ -484,18 +499,34 @@ const ProfilePage = ({ user, onLogout, updateUser }) => {
                     onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordChange(); }}
                   />
                   {newPassword && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className={newPassword.length >= 8 ? 'text-emerald-400' : 'text-slate-500'}>
-                        {newPassword.length >= 8 ? <Check className="w-3 h-3 inline" /> : '○'} 8+ chars
-                      </span>
-                      <span className={newPassword === confirmPassword && confirmPassword ? 'text-emerald-400' : 'text-slate-500'}>
-                        {newPassword === confirmPassword && confirmPassword ? <Check className="w-3 h-3 inline" /> : '○'} Matches
-                      </span>
+                    <div className="mt-3 p-3 rounded-lg bg-slate-950/50 border border-white/5 space-y-1.5">
+                      {passwordStrength.map((rule, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          {rule.passed ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          ) : (
+                            <XCircle className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          )}
+                          <span className={rule.passed ? 'text-emerald-400' : 'text-slate-500'}>
+                            {rule.label}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2 text-xs">
+                        {passwordsMatch ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        ) : (
+                          <XCircle className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        )}
+                        <span className={passwordsMatch ? 'text-emerald-400' : 'text-slate-500'}>
+                          Passwords match
+                        </span>
+                      </div>
                     </div>
                   )}
                   <Button
                     onClick={handlePasswordChange}
-                    disabled={savingPassword || newPassword.length < 8 || newPassword !== confirmPassword}
+                    disabled={savingPassword || !allPasswordRulesPassed || !passwordsMatch}
                     className="bg-violet-600 hover:bg-violet-700 text-white"
                   >
                     {savingPassword ? 'Updating...' : 'Update Password'}
