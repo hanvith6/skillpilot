@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sparkles, FileText, Lightbulb, Languages, MessageCircle, History, CreditCard, User, LogOut, Zap } from 'lucide-react';
 import { Button } from './ui/button';
+import { UserAvatar } from '../pages/ProfilePage';
 
 const Layout = ({ children, user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,7 +27,7 @@ const Layout = ({ children, user, onLogout }) => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
             <Sparkles className="text-white w-5 h-5" />
           </div>
-          <span className="font-bold text-white text-lg">SkillMate AI</span>
+          <span className="font-bold text-white text-lg">SkillPilot</span>
         </div>
         <button 
           onClick={() => setSidebarOpen(true)} 
@@ -46,7 +47,7 @@ const Layout = ({ children, user, onLogout }) => {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
                 <Sparkles className="text-white w-5 h-5" />
               </div>
-              <span className="font-bold text-white text-lg">SkillMate AI</span>
+              <span className="font-bold text-white text-lg">SkillPilot</span>
             </Link>
             <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-slate-400 hover:text-white" data-testid="close-sidebar-button">
               <X size={20} />
@@ -97,9 +98,7 @@ const Layout = ({ children, user, onLogout }) => {
           {/* User Menu */}
           <div className="px-4 py-4 border-t border-white/5">
             <div className="flex items-center space-x-3 px-4 py-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
+              <UserAvatar user={user} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-white truncate">{user?.name}</div>
                 <div className="text-xs text-slate-400 truncate">{user?.email}</div>

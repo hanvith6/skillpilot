@@ -42,7 +42,7 @@ const ReferralSection = ({ user }) => {
   const shareUrl = `${window.location.origin}/auth?ref=${user.referral_code}`;
 
   const handleShare = (platform) => {
-    const message = `Join me on SkillMate AI and get 120 FREE credits to build resumes, projects & more! Use my code: ${user.referral_code}`;
+    const message = `Join me on SkillPilot and get 120 FREE credits to build resumes, projects & more! Use my code: ${user.referral_code}`;
     
     let url = '';
     switch (platform) {

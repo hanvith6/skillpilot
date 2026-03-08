@@ -58,7 +58,7 @@ const LandingPage = () => {
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
             <Sparkles className="text-white w-6 h-6" />
           </div>
-          <span className="text-2xl font-bold text-white">SkillMate AI</span>
+          <span className="text-2xl font-bold text-white">SkillPilot</span>
         </div>
         <div className="space-x-4">
           <Link to="/auth">
@@ -207,7 +207,7 @@ const LandingPage = () => {
       <section className="container mx-auto px-6 py-20 text-center">
         <div className="glass-effect rounded-2xl p-12 border border-white/10">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">Ready to Level Up?</h2>
-          <p className="text-xl text-slate-400 mb-8">Join thousands of students already using SkillMate AI</p>
+          <p className="text-xl text-slate-400 mb-8">Join thousands of students already using SkillPilot</p>
           <Link to="/auth">
             <Button className="px-10 py-6 text-lg bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white glow-violet-strong" data-testid="cta-button">
               Start Free with 100 Credits
@@ -219,7 +219,7 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="container mx-auto px-6 py-8 border-t border-white/5 text-center text-slate-500 text-sm">
-        <p>© 2026 SkillMate AI. Powered by Google Gemini. Built for engineering students worldwide.</p>
+        <p>© 2026 SkillPilot. Powered by Google Gemini. Built for engineering students worldwide.</p>
       </footer>
     </div>
   );

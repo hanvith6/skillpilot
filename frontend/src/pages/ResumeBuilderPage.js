@@ -27,7 +27,7 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
       toast.error('Please fill in all required fields');
       return;
     }
-    if (user.credits < creditsNeeded) {
+    if ((user?.credits || 0) < creditsNeeded) {
       toast.error('Insufficient credits');
       return;
     }
@@ -109,7 +109,7 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
 
                 <Button
                   onClick={handleGenerate}
-                  disabled={loading || user.credits < creditsNeeded}
+                  disabled={loading || (user?.credits || 0) < creditsNeeded}
                   className={`w-full py-6 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white ${emergentMode ? 'emergent-mode' : ''}`}
                   data-testid="generate-resume-button"
                 >
@@ -128,7 +128,7 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
 
           {/* Output Section */}
           <div>
-            <div className="glass-effect rounded-xl p-6 border border-white/10 min-h-[600px]">
+            <div className="glass-effect rounded-xl p-6 border border-white/10 min-h-[600px] max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-white">Generated Resume</h3>
                 {result && (
@@ -190,8 +190,8 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
                       <div className="space-y-3">
                         {result.experience.map((exp, index) => (
                           <div key={index} className="pl-4 border-l-2 border-violet-500/30">
-                            <div className="font-semibold text-white">{exp.title}</div>
-                            <div className="text-sm text-slate-400">{exp.company} • {exp.duration}</div>
+                            <div className="font-semibold text-white">{exp.title || 'Untitled'}</div>
+                            <div className="text-sm text-slate-400">{[exp.company, exp.duration].filter(Boolean).join(' • ')}</div>
                             {exp.points && exp.points.length > 0 && (
                               <ul className="mt-2 space-y-1 list-disc list-inside text-slate-300 text-sm">
                                 {exp.points.map((point, i) => (
@@ -211,8 +211,8 @@ const ResumeBuilderPage = ({ user, onLogout, updateCredits }) => {
                       <div className="space-y-2">
                         {result.education.map((edu, index) => (
                           <div key={index} className="text-slate-300">
-                            <div className="font-semibold">{edu.degree}</div>
-                            <div className="text-sm text-slate-400">{edu.institution} • {edu.year}</div>
+                            <div className="font-semibold">{edu.degree || 'Degree'}</div>
+                            <div className="text-sm text-slate-400">{[edu.institution, edu.year].filter(Boolean).join(' • ')}</div>
                           </div>
                         ))}
                       </div>

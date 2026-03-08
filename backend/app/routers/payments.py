@@ -42,16 +42,17 @@ async def create_razorpay_order(
     current_user: dict = Depends(get_current_user),
 ):
     package = CREDIT_PACKAGES.get(request.package_id)
-    if not package or package["currency"] != "INR":
+    if not package:
         raise HTTPException(status_code=400, detail="Invalid package")
 
-    amount_paise = int(package["price"] * 100)
+    currency = package["currency"]  # INR or USD
+    amount_smallest = int(package["price"] * 100)  # paise or cents
 
     try:
         rz = _get_razorpay()
         order = rz.order.create({
-            "amount": amount_paise,
-            "currency": "INR",
+            "amount": amount_smallest,
+            "currency": currency,
             "payment_capture": 1,
         })
 
@@ -61,7 +62,7 @@ async def create_razorpay_order(
             "user_id": current_user["id"],
             "session_id": order["id"],
             "amount": package["price"],
-            "currency": "INR",
+            "currency": currency,
             "package_id": request.package_id,
             "credits": package["credits"],
             "status": "pending",
@@ -71,8 +72,8 @@ async def create_razorpay_order(
 
         return RazorpayOrderResponse(
             order_id=order["id"],
-            amount=amount_paise,
-            currency="INR",
+            amount=amount_smallest,
+            currency=currency,
             key_id=settings.RAZORPAY_KEY_ID,
         )
     except Exception as e:
@@ -245,4 +246,4 @@ async def stripe_webhook(request: Request):
 
     except Exception as e:
         logger.error(f"Stripe webhook error: {e}")
-        return {"status": "error"}
+        raise HTTPException(status_code=400, detail="Webhook processing failed")

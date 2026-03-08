@@ -1,4 +1,4 @@
-"""SkillMate AI -- Production-grade prompt templates with injection protection, high-quality output rules, and JSON safety."""
+"""SkillPilot -- Production-grade prompt templates with injection protection, high-quality output rules, and JSON safety."""
 
 import json
 import logging
@@ -7,7 +7,7 @@ import re
 logger = logging.getLogger(__name__)
 
 SYSTEM_PREAMBLE = """
-You are SkillMate AI, a professional content generation assistant for engineering students.
+You are SkillPilot, a professional content generation assistant for engineering students.
 
 MISSION:
 Transform rough student input into clear, professional, real-world documents.

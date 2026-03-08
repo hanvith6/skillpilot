@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import AuthCallback from './components/AuthCallback';
@@ -79,6 +79,10 @@ function App() {
     setUser(prev => ({ ...prev, credits }));
   };
 
+  const updateUser = (fields) => {
+    setUser(prev => ({ ...prev, ...fields }));
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#020617] flex items-center justify-center">
@@ -101,7 +105,16 @@ function App() {
           <Route path="/interview-coach" element={user ? <InterviewCoachPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
           <Route path="/purchase" element={user ? <PurchaseCreditsPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /> : <Navigate to="/auth" />} />
           <Route path="/history" element={user ? <HistoryPage user={user} onLogout={handleLogout} /> : <Navigate to="/auth" />} />
-          <Route path="/profile" element={user ? <ProfilePage user={user} onLogout={handleLogout} /> : <Navigate to="/auth" />} />
+          <Route path="/profile" element={user ? <ProfilePage user={user} onLogout={handleLogout} updateUser={updateUser} /> : <Navigate to="/auth" />} />
+          <Route path="*" element={
+            <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-center px-4">
+              <h1 className="text-6xl font-bold text-white mb-4">404</h1>
+              <p className="text-slate-400 mb-6">Page not found</p>
+              <Link to={user ? '/dashboard' : '/'} className="text-violet-400 hover:text-violet-300 underline">
+                Go back home
+              </Link>
+            </div>
+          } />
         </Routes>
         <Toaster position="top-right" />
       </div>

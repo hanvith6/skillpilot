@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="SkillMate AI API",
+        title="SkillPilot API",
         version="1.0.0",
         docs_url="/docs",
         redoc_url=None,
@@ -46,7 +46,7 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "healthy", "service": "skillmate-ai"}
 
-    logger.info("SkillMate AI API initialized")
+    logger.info("SkillPilot API initialized")
     return app
 
 

@@ -25,7 +25,7 @@ const ProjectGeneratorPage = ({ user, onLogout, updateCredits }) => {
       toast.error('Please enter a project topic');
       return;
     }
-    if (user.credits < creditsNeeded) {
+    if ((user?.credits || 0) < creditsNeeded) {
       toast.error('Insufficient credits');
       return;
     }
@@ -84,7 +84,7 @@ const ProjectGeneratorPage = ({ user, onLogout, updateCredits }) => {
                   <span className="text-slate-400">Credits needed:</span>
                   <span className="text-white font-bold text-lg" data-testid="credits-display">{creditsNeeded}</span>
                 </div>
-                <Button onClick={handleGenerate} disabled={loading || user.credits < creditsNeeded} className={`w-full py-6 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white ${emergentMode ? 'emergent-mode' : ''}`} data-testid="generate-button">
+                <Button onClick={handleGenerate} disabled={loading || (user?.credits || 0) < creditsNeeded} className={`w-full py-6 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white ${emergentMode ? 'emergent-mode' : ''}`} data-testid="generate-button">
                   {loading ? 'Processing...' : <><Sparkles className="w-5 h-5 mr-2" />Generate Project</>}
                 </Button>
               </div>
@@ -93,7 +93,7 @@ const ProjectGeneratorPage = ({ user, onLogout, updateCredits }) => {
 
           {/* Output */}
           <div>
-            <div className="glass-effect rounded-xl p-6 border border-white/10 min-h-[600px]">
+            <div className="glass-effect rounded-xl p-6 border border-white/10 min-h-[600px] max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-white">Generated Report</h3>
                 {result && (
@@ -134,11 +134,51 @@ const ProjectGeneratorPage = ({ user, onLogout, updateCredits }) => {
                       </ul>
                     </div>
                   )}
+                  {result.architecture && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-violet-400 mb-2">Architecture</h4>
+                      <p className="text-slate-300 leading-relaxed">{result.architecture}</p>
+                    </div>
+                  )}
+                  {result.modules && result.modules.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-violet-400 mb-2">Modules</h4>
+                      <ul className="list-disc list-inside text-slate-300 space-y-1">
+                        {result.modules.map((mod, i) => (
+                          <li key={i}><span className="font-bold text-white">{typeof mod === 'string' ? mod : mod.name}</span>{typeof mod === 'string' ? '' : ` — ${mod.description || ''}`}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {result.implementation && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-violet-400 mb-2">Implementation</h4>
+                      <p className="text-slate-300 leading-relaxed">{result.implementation}</p>
+                    </div>
+                  )}
+                  {result.tech_stack && result.tech_stack.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-violet-400 mb-2">Tech Stack</h4>
+                      <ul className="list-disc list-inside text-slate-300 space-y-1">
+                        {result.tech_stack.map((tech, i) => (
+                          <li key={i}><span className="font-bold text-white">{typeof tech === 'string' ? tech : tech.name}</span>{typeof tech === 'string' ? '' : ` — ${tech.purpose || ''}`}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {result.future_scope && result.future_scope.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-violet-400 mb-2">Future Scope</h4>
+                      <ul className="list-disc list-inside text-slate-300 space-y-1">
+                        {result.future_scope.map((item, i) => <li key={i}>{item}</li>)}
+                      </ul>
+                    </div>
+                  )}
                   {result.viva_questions && result.viva_questions.length > 0 && (
                     <div>
                       <h4 className="text-lg font-semibold text-violet-400 mb-2">Viva Questions ({result.viva_questions.length})</h4>
                       <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                        {result.viva_questions.slice(0, 5).map((q, i) => (
+                        {result.viva_questions.map((q, i) => (
                           <div key={i} className="glass-effect p-3 rounded-lg border border-white/5">
                             <div className="font-medium text-white">Q{i+1}: {q.question || q}</div>
                             {q.answer && <div className="text-sm text-slate-400 mt-1">{q.answer}</div>}

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import EmergentModeCard from '../components/EmergentModeCard';
-import { MessageCircle, Copy, Sparkles, Check } from 'lucide-react';
+import { MessageCircle, Copy, Sparkles, Check, Download } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import useAIGeneration from '../hooks/useAIGeneration';
+import useDownload from '../hooks/useDownload';
 
 const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
   const [questionType, setQuestionType] = useState('Tell me about yourself');
@@ -15,7 +16,10 @@ const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
   const [emergentMode, setEmergentMode] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const { loading, result, generate } = useAIGeneration();
+  const { loading, result, generate, historyId } = useAIGeneration();
+  const { download } = useDownload();
+
+  const handleDownload = (format) => download(historyId, format, 'interview');
 
   const creditsNeeded = emergentMode ? 4 : 3;
 
@@ -31,7 +35,7 @@ const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
   ];
 
   const handleGenerate = async () => {
-    if (user.credits < creditsNeeded) {
+    if ((user?.credits || 0) < creditsNeeded) {
       toast.error('Insufficient credits');
       return;
     }
@@ -45,11 +49,15 @@ const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
     });
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    toast.success('Copied to clipboard!');
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(result);
+      setCopied(true);
+      toast.success('Copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy');
+    }
   };
 
   return (
@@ -92,7 +100,7 @@ const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
                   <span className="text-slate-400">Credits needed:</span>
                   <span className="text-white font-bold text-lg" data-testid="credits-display">{creditsNeeded}</span>
                 </div>
-                <Button onClick={handleGenerate} disabled={loading || user.credits < creditsNeeded} className={`w-full py-6 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white ${emergentMode ? 'emergent-mode' : ''}`} data-testid="generate-button">
+                <Button onClick={handleGenerate} disabled={loading || (user?.credits || 0) < creditsNeeded} className={`w-full py-6 bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white ${emergentMode ? 'emergent-mode' : ''}`} data-testid="generate-button">
                   {loading ? 'Processing...' : <><Sparkles className="w-5 h-5 mr-2" />Generate Answer</>}
                 </Button>
               </div>
@@ -100,14 +108,22 @@ const InterviewCoachPage = ({ user, onLogout, updateCredits }) => {
           </div>
 
           <div>
-            <div className="glass-effect rounded-xl p-6 border border-white/10 min-h-[600px]">
+            <div className="glass-effect rounded-xl p-6 border border-white/10 min-h-[600px] max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-white">Your Answer</h3>
                 {result && (
-                  <Button onClick={handleCopy} size="sm" variant="ghost" className="text-slate-400 hover:text-white" data-testid="copy-button">
-                    {copied ? <Check className="w-4 h-4 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
-                    {copied ? 'Copied!' : 'Copy'}
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button onClick={() => handleDownload('pdf')} size="sm" variant="outline" className="border-white/10 text-slate-300 hover:text-white hover:bg-white/5">
+                      <Download className="w-4 h-4 mr-1" />PDF
+                    </Button>
+                    <Button onClick={() => handleDownload('docx')} size="sm" variant="outline" className="border-white/10 text-slate-300 hover:text-white hover:bg-white/5">
+                      <Download className="w-4 h-4 mr-1" />DOCX
+                    </Button>
+                    <Button onClick={handleCopy} size="sm" variant="ghost" className="text-slate-400 hover:text-white" data-testid="copy-button">
+                      {copied ? <Check className="w-4 h-4 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
                 )}
               </div>
               {!result ? (

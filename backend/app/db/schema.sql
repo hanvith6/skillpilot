@@ -1,4 +1,4 @@
--- SkillMate AI - Supabase PostgreSQL Schema
+-- SkillPilot - Supabase PostgreSQL Schema
 -- Run this in the Supabase SQL Editor to set up the database
 
 -- Profiles table (extends Supabase auth.users)
@@ -24,7 +24,7 @@ BEGIN
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
     NEW.email,
-    'SKILLMATE-' || UPPER(SUBSTRING(gen_random_uuid()::text, 1, 8))
+    'SKILLPILOT-' || UPPER(SUBSTRING(gen_random_uuid()::text, 1, 8))
   );
   RETURN NEW;
 END;

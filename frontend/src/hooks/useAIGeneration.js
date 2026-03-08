@@ -25,6 +25,8 @@ const useAIGeneration = () => {
 
   const generate = async ({ endpoint, payload, user, updateCredits, successMessage, extractResult }) => {
     setLoading(true);
+    setResult(null);
+    setHistoryId(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {

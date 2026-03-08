@@ -16,7 +16,10 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
  */
 const useDownload = () => {
   const download = async (historyId, format, prefix) => {
-    if (!historyId) return;
+    if (!historyId) {
+      toast.error('No document to download yet');
+      return;
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -38,6 +41,7 @@ const useDownload = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
       toast.success(`Downloaded as ${format.toUpperCase()}`);
     } catch (error) {
       toast.error('Download failed');

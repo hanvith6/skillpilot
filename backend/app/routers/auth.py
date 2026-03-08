@@ -127,6 +127,23 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
+@router.patch("/me")
+async def update_profile(request: Request, current_user: dict = Depends(get_current_user)):
+    body = await request.json()
+    allowed_fields = {"name", "picture"}
+    updates = {k: v for k, v in body.items() if k in allowed_fields and v}
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    db = get_db()
+    db.table("profiles").update(updates).eq("id", current_user["id"]).execute()
+
+    # Return updated profile
+    result = db.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
+    return result.data
+
+
 @router.post("/apply-referral")
 async def apply_referral(request: Request, current_user: dict = Depends(get_current_user)):
     body = await request.json()

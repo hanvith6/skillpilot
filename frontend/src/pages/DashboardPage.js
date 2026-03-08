@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import ReferralSection from '../components/ReferralSection';
 import { FileText, Lightbulb, Languages, MessageCircle, ArrowRight, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
@@ -12,10 +13,12 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const DashboardPage = ({ user, onLogout }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+    fetchStats();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchHistory = async () => {
     try {
@@ -31,6 +34,28 @@ const DashboardPage = ({ user, onLogout }) => {
       setLoading(false);
     }
   };
+
+  const fetchStats = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const response = await axios.get(`${API_URL}/api/history/stats`, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const CHART_COLORS = { resume: '#8b5cf6', project: '#ec4899', english: '#3b82f6', interview: '#10b981' };
+  const CHART_LABELS = { resume: 'Resume', project: 'Project', english: 'English', interview: 'Interview' };
+
+  const chartData = stats?.breakdown ? Object.entries(stats.breakdown).map(([key, value]) => ({
+    name: CHART_LABELS[key] || key,
+    value,
+    color: CHART_COLORS[key] || '#6b7280',
+  })) : [];
 
   const tools = [
     {
@@ -114,7 +139,7 @@ const DashboardPage = ({ user, onLogout }) => {
               <span className="text-slate-400 text-sm font-medium">Total Generations</span>
               <TrendingUp className="w-5 h-5 text-blue-400" />
             </div>
-            <div className="text-3xl font-bold text-white">{history.length}</div>
+            <div className="text-3xl font-bold text-white">{stats?.total_generations ?? history.length}</div>
             <Link to="/history">
               <Button variant="link" className="text-violet-400 hover:text-violet-300 p-0 mt-2" data-testid="dashboard-view-history">
                 View all history <ArrowRight className="w-4 h-4 ml-1" />
@@ -127,10 +152,53 @@ const DashboardPage = ({ user, onLogout }) => {
               <span className="text-slate-400 text-sm font-medium">Credits Used</span>
               <FileText className="w-5 h-5 text-pink-400" />
             </div>
-            <div className="text-3xl font-bold text-white">{history.reduce((sum, h) => sum + (h.credits_used || 0), 0)}</div>
+            <div className="text-3xl font-bold text-white">{stats?.total_credits_used ?? history.reduce((sum, h) => sum + (h.credits_used || 0), 0)}</div>
             <p className="text-slate-500 text-sm mt-2">Across all tools</p>
           </div>
         </div>
+
+        {/* Credit Usage Chart */}
+        {chartData.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4">Credit Usage</h2>
+            <div className="glass-effect rounded-xl p-6 border border-white/10">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="w-48 h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={75}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                        formatter={(value, name) => [`${value} uses`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 grid grid-cols-2 gap-3">
+                  {chartData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm text-slate-300">{item.name}</span>
+                      <span className="text-sm text-slate-500 ml-auto">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Access Tools */}
         <div className="mb-8">

@@ -24,7 +24,7 @@ async def create_checkout_session(
             "price_data": {
                 "currency": currency.lower(),
                 "product_data": {
-                    "name": f"SkillMate AI Credits ({metadata.get('credits', '')})",
+                    "name": f"SkillPilot Credits ({metadata.get('credits', '')})",
                     "description": f"Package: {metadata.get('package_id', '')}",
                 },
                 "unit_amount": int(amount * 100),

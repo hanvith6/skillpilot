@@ -18,22 +18,11 @@ def calculate_credits_needed(tool_type: str, emergent_mode: bool) -> int:
     return base_cost
 
 
-async def check_credits(user_id: str, credits_needed: int) -> int:
-    """Check if user has enough credits. Returns current credit balance."""
+async def deduct_credits(user_id: str, amount: int) -> int:
+    """Atomically deduct credits using Supabase RPC. Returns new balance."""
     db = get_db()
-    result = db.table("profiles").select("credits").eq("id", user_id).single().execute()
-    if not result.data:
-        return 0
-    return result.data["credits"]
-
-
-async def deduct_credits(user_id: str, amount: int):
-    """Deduct credits from user balance using RPC for atomicity."""
-    db = get_db()
-    # Use raw SQL via RPC for atomic decrement, or update directly
-    result = db.table("profiles").select("credits").eq("id", user_id).single().execute()
-    current = result.data["credits"]
-    db.table("profiles").update({"credits": current - amount}).eq("id", user_id).execute()
+    result = db.rpc("deduct_credits", {"p_user_id": user_id, "p_amount": amount}).execute()
+    return result.data
 
 
 async def save_generation(user_id: str, gen_type: str, title: str, content: dict, credits_needed: int) -> str:

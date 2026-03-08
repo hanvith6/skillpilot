@@ -21,7 +21,7 @@ const PASSWORD_RULES = [
 const AuthPage = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState('form'); // 'form' | 'otp'
+  const [step, setStep] = useState('form'); // 'form' | 'otp' | 'forgot'
   const [otpCode, setOtpCode] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [formData, setFormData] = useState({
@@ -170,6 +170,85 @@ const AuthPage = ({ onLogin }) => {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!formData.email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      toast.success('Password reset link sent! Check your email.');
+      setStep('form');
+    } catch (error) {
+      toast.error(error.message || 'Failed to send reset link');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Forgot Password Screen
+  if (step === 'forgot') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-600/20 blur-[150px]"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/20 blur-[150px]"></div>
+        </div>
+        <div className="w-full max-w-md">
+          <div className="flex items-center justify-center space-x-2 mb-8">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+              <Lock className="text-white w-6 h-6" />
+            </div>
+            <span className="text-3xl font-bold text-white">Reset Password</span>
+          </div>
+          <div className="glass-effect rounded-2xl p-8 border border-white/10">
+            <p className="text-slate-400 text-center mb-6">
+              Enter your email and we'll send you a password reset link.
+            </p>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <Label htmlFor="reset-email" className="text-slate-300">Email</Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="you@university.edu"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="pl-10 bg-slate-950/50 border-white/10 focus:border-violet-500 text-white"
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white py-6"
+                disabled={loading}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </form>
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setStep('form')}
+                className="text-slate-500 hover:text-slate-400 text-sm"
+              >
+                Back to sign in
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // OTP Verification Screen
   if (step === 'otp') {
     return (
@@ -256,7 +335,7 @@ const AuthPage = ({ onLogin }) => {
           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
             <Sparkles className="text-white w-6 h-6" />
           </div>
-          <span className="text-3xl font-bold text-white">SkillMate AI</span>
+          <span className="text-3xl font-bold text-white">SkillPilot</span>
         </div>
 
         {/* Auth Card */}
@@ -317,7 +396,7 @@ const AuthPage = ({ onLogin }) => {
                   <Input
                     id="referral"
                     type="text"
-                    placeholder="SKILLMATE-ABC123"
+                    placeholder="SKILLPILOT-ABC123"
                     value={formData.referral_code}
                     onChange={(e) => setFormData({ ...formData, referral_code: e.target.value.toUpperCase() })}
                     className="mt-1 bg-slate-950/50 border-white/10 focus:border-violet-500 text-white"
@@ -379,6 +458,18 @@ const AuthPage = ({ onLogin }) => {
                 </div>
               )}
             </div>
+
+            {isLogin && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setStep('forgot')}
+                  className="text-violet-400 hover:text-violet-300 text-sm"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             <Button
               type="submit"
