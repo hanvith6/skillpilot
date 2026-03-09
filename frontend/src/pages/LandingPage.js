@@ -218,13 +218,31 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="container mx-auto px-6 py-8 border-t border-white/5 text-center text-slate-500 text-sm">
-        <p>© 2026 SkillPilot. Powered by Google Gemini. Built for engineering students worldwide.</p>
-        <p className="mt-2">Crafted with <span className="text-red-400">❤</span> by{' '}
-          <a href="https://www.linkedin.com/in/hanvith-reddy-a67857252/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors">
-            Hanvith Reddy B
-          </a>
-        </p>
+      <footer className="container mx-auto px-6 py-10 border-t border-white/5">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+              <Sparkles className="text-white w-5 h-5" />
+            </div>
+            <span className="text-lg font-bold text-white">SkillPilot</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-400">
+            <a href="/terms" className="hover:text-violet-400 transition-colors">Terms & Conditions</a>
+            <a href="/privacy" className="hover:text-violet-400 transition-colors">Privacy Policy</a>
+            <a href="/refund" className="hover:text-violet-400 transition-colors">Refund Policy</a>
+            <a href="/cancellation" className="hover:text-violet-400 transition-colors">Cancellation Policy</a>
+            <a href="/shipping" className="hover:text-violet-400 transition-colors">Shipping & Exchange</a>
+            <a href="/contact" className="hover:text-violet-400 transition-colors">Contact Us</a>
+          </div>
+        </div>
+        <div className="mt-6 text-center text-slate-500 text-sm">
+          <p>&copy; 2026 SkillPilot. Powered by Google Gemini. Built for engineering students worldwide.</p>
+          <p className="mt-2">Crafted with <span className="text-red-400">&hearts;</span> by{' '}
+            <a href="https://www.linkedin.com/in/hanvith-reddy-a67857252/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors">
+              Hanvith Reddy B
+            </a>
+          </p>
+        </div>
       </footer>
     </div>
   );

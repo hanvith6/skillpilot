@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { CreditCard, Check, Zap, Globe } from 'lucide-react';
+import { CreditCard, Check, Zap, Globe, ShieldAlert, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useRazorpay } from 'react-razorpay';
 import axios from 'axios';
@@ -11,7 +11,23 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const PurchaseCreditsPage = ({ user, onLogout, updateCredits }) => {
   const [loading, setLoading] = useState('');
-  const [Razorpay] = useRazorpay();
+  const { Razorpay } = useRazorpay();
+  const [geoData, setGeoData] = useState(null);
+  const [geoLoading, setGeoLoading] = useState(true);
+
+  useEffect(() => {
+    const detectLocation = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/geo/detect`);
+        setGeoData(res.data);
+      } catch {
+        setGeoData({ region: 'global', is_vpn: false, country_code: 'UNKNOWN' });
+      } finally {
+        setGeoLoading(false);
+      }
+    };
+    detectLocation();
+  }, []);
 
   const packages = [
     {
@@ -99,6 +115,7 @@ const PurchaseCreditsPage = ({ user, onLogout, updateCredits }) => {
         currency: response.data.currency,
         order_id: response.data.order_id,
         name: 'SkillPilot',
+        image: `${window.location.origin}/favicon.svg`,
         description: `Purchase ${pkg.credits} Credits`,
         handler: async (razorpayResponse) => {
           try {
@@ -204,6 +221,32 @@ const PurchaseCreditsPage = ({ user, onLogout, updateCredits }) => {
     );
   };
 
+  if (geoLoading) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (geoData?.is_vpn) {
+    return (
+      <Layout user={user} onLogout={onLogout}>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <ShieldAlert className="w-16 h-16 text-red-400 mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">VPN/Proxy Detected</h2>
+          <p className="text-slate-400 max-w-md">
+            Please disable your VPN or proxy to access the purchase page. We need to verify your location to show the correct pricing.
+          </p>
+        </div>
+      </Layout>
+    );
+  }
+
+  const isIndia = geoData?.region === 'india';
+
   return (
     <Layout user={user} onLogout={onLogout}>
       <div className="p-6 md:p-10">
@@ -212,27 +255,27 @@ const PurchaseCreditsPage = ({ user, onLogout, updateCredits }) => {
           <p className="text-slate-400">Choose a package and boost your productivity</p>
         </div>
 
-        {/* India Pricing */}
-        <div className="mb-12">
-          <div className="flex items-center justify-center mb-6">
-            <div className="flex items-center space-x-2">
-              <Globe className="w-5 h-5 text-violet-400" />
-              <h2 className="text-2xl font-bold text-white">India Pricing</h2>
+        {isIndia ? (
+          <div>
+            <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center space-x-2">
+                <Globe className="w-5 h-5 text-violet-400" />
+                <h2 className="text-2xl font-bold text-white">India Pricing</h2>
+              </div>
             </div>
+            {renderPackages(indiaPackages, 'violet')}
           </div>
-          {renderPackages(indiaPackages, 'violet')}
-        </div>
-
-        {/* Global Pricing */}
-        <div>
-          <div className="flex items-center justify-center mb-6">
-            <div className="flex items-center space-x-2">
-              <Globe className="w-5 h-5 text-blue-400" />
-              <h2 className="text-2xl font-bold text-white">Global Pricing</h2>
+        ) : (
+          <div>
+            <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center space-x-2">
+                <Globe className="w-5 h-5 text-blue-400" />
+                <h2 className="text-2xl font-bold text-white">Global Pricing</h2>
+              </div>
             </div>
+            {renderPackages(globalPackages, 'blue')}
           </div>
-          {renderPackages(globalPackages, 'blue')}
-        </div>
+        )}
       </div>
     </Layout>
   );

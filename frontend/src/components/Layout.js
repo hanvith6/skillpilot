@@ -136,6 +136,23 @@ const Layout = ({ children, user, onLogout }) => {
           <div className="absolute bottom-[-10%] left-[20%] w-[500px] h-[500px] rounded-full bg-indigo-600/5 blur-[120px]"></div>
         </div>
         {children}
+        {/* Footer */}
+        <footer className="px-6 py-6 border-t border-white/5 mt-10">
+          <div className="flex flex-wrap justify-center gap-4 text-xs text-slate-500">
+            <a href="/terms" className="hover:text-violet-400 transition-colors">Terms & Conditions</a>
+            <span className="text-slate-700">|</span>
+            <a href="/privacy" className="hover:text-violet-400 transition-colors">Privacy Policy</a>
+            <span className="text-slate-700">|</span>
+            <a href="/refund" className="hover:text-violet-400 transition-colors">Refund Policy</a>
+            <span className="text-slate-700">|</span>
+            <a href="/cancellation" className="hover:text-violet-400 transition-colors">Cancellation Policy</a>
+            <span className="text-slate-700">|</span>
+            <a href="/shipping" className="hover:text-violet-400 transition-colors">Shipping & Exchange</a>
+            <span className="text-slate-700">|</span>
+            <a href="/contact" className="hover:text-violet-400 transition-colors">Contact Us</a>
+          </div>
+          <p className="text-center text-xs text-slate-600 mt-3">&copy; 2026 SkillPilot. All rights reserved.</p>
+        </footer>
       </main>
     </div>
   );

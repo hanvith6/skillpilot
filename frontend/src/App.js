@@ -11,6 +11,10 @@ import InterviewCoachPage from './pages/InterviewCoachPage';
 import PurchaseCreditsPage from './pages/PurchaseCreditsPage';
 import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import RefundPolicyPage from './pages/RefundPolicyPage';
+import CancellationPolicyPage from './pages/CancellationPolicyPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { supabase } from './lib/supabase';
@@ -114,6 +118,10 @@ function App() {
           <Route path="/purchase" element={user ? <ErrorBoundary><PurchaseCreditsPage user={user} onLogout={handleLogout} updateCredits={updateUserCredits} /></ErrorBoundary> : <Navigate to="/auth" />} />
           <Route path="/history" element={user ? <ErrorBoundary><HistoryPage user={user} onLogout={handleLogout} /></ErrorBoundary> : <Navigate to="/auth" />} />
           <Route path="/profile" element={user ? <ErrorBoundary><ProfilePage user={user} onLogout={handleLogout} updateUser={updateUser} /></ErrorBoundary> : <Navigate to="/auth" />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/refund" element={<RefundPolicyPage />} />
+          <Route path="/cancellation" element={<CancellationPolicyPage />} />
           <Route path="*" element={
             <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-center px-4">
               <h1 className="text-6xl font-bold text-white mb-4">404</h1>
