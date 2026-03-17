@@ -313,7 +313,9 @@ Detailed technical documentation is in the [`docs/`](./docs/) folder.
 
 ## License
 
-This project is proprietary. All rights reserved.
+This project is licensed under the [MIT License](./LICENSE).
+
+Copyright (c) 2026 Hanvith Reddy B
 
 ---
 
