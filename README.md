@@ -303,6 +303,28 @@ Detailed technical documentation is in the [`docs/`](./docs/) folder.
 
 ## Roadmap
 
+### SkillArena — Interactive Skill Learning Games *(Upcoming Main Feature)*
+
+> **Our next big selling point.** An interactive, gamified learning experience built into SkillPilot — where users don't just read about skills, they *play* their way to mastering them.
+
+- [ ] **SkillArena** — game-based learning sessions for Python, DSA, and SQL
+  - Play through coding challenges, quizzes, and puzzles in a game-like flow
+  - Track XP, streaks, and progress for each skill track
+  - Compete on leaderboards with other learners
+  - AI-powered hints and explanations powered by the existing LLM backend
+
+### SkillPilot v2 — Redesigned Experience *(In Planning)*
+
+> A ground-up rethink of how users interact with every existing feature — new UI, new user flows, and a new session-based interaction model across the entire platform.
+
+- [ ] **New UI** — redesigned interface with a modern, cohesive visual language
+- [ ] **New user flows** — streamlined journeys for resume building, mock interviews, and all AI tools
+- [ ] **Interactive session model** — users engage with tools in a guided, step-by-step session rather than single-shot generation
+- [ ] **Conversation-style interaction** — iterative back-and-forth with AI for refinement (e.g., tweak your resume in real time)
+- [ ] **Unified dashboard** — all tools, history, and progress accessible from one place
+
+### Other Planned Improvements
+
 - [ ] Stripe live mode activation (currently test keys)
 - [ ] Email notifications for payment receipts
 - [ ] Generation history search and filtering
