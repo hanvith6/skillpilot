@@ -4,7 +4,7 @@
 **Tester:** Automated QA Suite
 **Environment:** Local (macOS Darwin 25.3.0)
 **Backend:** FastAPI on localhost:8000
-**Database:** Supabase (zirfoesijcouksjqzltd.supabase.co)
+**Database:** Supabase (hosted PostgreSQL)
 
 ---
 

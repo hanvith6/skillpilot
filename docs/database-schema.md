@@ -7,12 +7,15 @@ Primary user data table. Created automatically by `handle_new_user()` trigger on
 
 | Column | Type | Default | Description |
 |--------|------|---------|-------------|
-| id | UUID (PK) | auth.uid() | References auth.users |
+| id | UUID (PK) | auth.uid() | References auth.users ON DELETE CASCADE |
 | name | TEXT | extracted from email | Display name |
-| email | TEXT | from auth | User email |
+| email | TEXT | from auth | User email (UNIQUE) |
 | credits | INTEGER | 100 | Available generation credits |
 | picture | TEXT | NULL | Avatar preset ID or URL |
-| referral_code | TEXT | SKILLPILOT-XXXXXXXX | Unique referral code |
+| referral_code | TEXT | SKILLPILOT-XXXXXXXX | Unique referral code (auto-generated) |
+| referred_by | UUID | NULL | References profiles(id) — user who referred this account |
+| total_referrals | INTEGER | 0 | Count of successful referrals made |
+| referral_credits_earned | INTEGER | 0 | Total credits earned through referrals |
 | created_at | TIMESTAMPTZ | now() | Account creation time |
 
 **RLS Policies:**
@@ -60,6 +63,26 @@ Records all payment attempts and completions.
 
 **RLS Policies:**
 - SELECT: `auth.uid() = user_id`
+
+---
+
+### referrals
+Tracks referral relationships and credit awards.
+
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| id | UUID (PK) | gen_random_uuid() | Referral record ID |
+| referrer_id | UUID (FK) | — | References profiles(id) ON DELETE CASCADE |
+| referred_user_id | UUID | NULL | References profiles(id) |
+| referred_user_name | TEXT | NULL | Display name of referred user |
+| referral_code | TEXT | — | Code used to complete referral |
+| credits_awarded | INTEGER | 50 | Credits given to referrer |
+| created_at | TIMESTAMPTZ | now() | Referral timestamp |
+
+**Indexes:** `idx_referrals_referrer` on `(referrer_id)`
+
+**RLS Policies:**
+- SELECT: `auth.uid() = referrer_id`
 
 ---
 

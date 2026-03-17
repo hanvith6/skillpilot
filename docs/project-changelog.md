@@ -78,7 +78,7 @@ Complete step-by-step record of how the project was built from initial concept t
 
 ## Phase 6: Domain & Infrastructure Setup
 - Purchased domain: `skillspilot.xyz`
-- Configured Cloudflare DNS (Zone: `08568819ae392773707cc2170607bdbd`)
+- Configured Cloudflare DNS for `skillspilot.xyz`
 - Set up DNS records:
   - `A` record for root domain
   - `CNAME` for `www` -> `skillspilot.xyz`

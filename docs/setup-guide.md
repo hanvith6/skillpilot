@@ -50,7 +50,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 cd frontend
 
 # Install dependencies
-npm install
+npm install --legacy-peer-deps
 
 # Configure environment
 cp .env.example .env
@@ -166,20 +166,21 @@ railway init
 railway up
 ```
 
+**Important:** Set the service root directory to `backend` in Railway dashboard → Service Settings → Root Directory. Without this, Railway will fail to build when triggered from the monorepo root.
+
 **Environment variables in Railway dashboard:** Same as `.env` file.
 
 **Custom domain:** Add `api.skillspilot.xyz` in Railway settings.
 
 ### Cloudflare DNS
 
-| Type | Name | Content | Proxy |
-|------|------|---------|-------|
-| A / CNAME | @ | Vercel IP / cname.vercel-dns.com | Proxied |
-| CNAME | www | skillspilot.xyz | Proxied |
-| CNAME | api | Railway domain | Proxied |
+| Type | Name | Content | Proxy Status |
+|------|------|---------|--------------|
+| A | @ | `76.76.21.21` (Vercel) | DNS only |
+| CNAME | www | `cname.vercel-dns.com` | DNS only |
+| CNAME | api | `<railway-domain>.up.railway.app` | **DNS only** (must NOT be proxied) |
 
-**Page Rule (already configured):**
-- `www.skillspilot.xyz/*` -> `https://skillspilot.xyz/$1` (301 redirect)
+> **Important:** The `api` subdomain must be set to **DNS only** (grey cloud in Cloudflare). Enabling Cloudflare proxy on the API causes "Application not found" errors from Railway.
 
 ### Post-Deployment Checklist
 

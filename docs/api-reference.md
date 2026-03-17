@@ -20,6 +20,45 @@ Check API status.
 
 ## Authentication
 
+### POST /api/auth/signup
+Register a new user.
+
+**Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass1!",
+  "referral_code": "SKILLPILOT-XXXXXXXX"
+}
+```
+
+**Response:** `200`
+```json
+{"token": "<jwt>", "user": { ...profile }}
+```
+
+**Notes:** Creates Supabase auth user. DB trigger auto-creates profile. Optional referral code awards +20 credits to new user and +50 to referrer.
+
+---
+
+### POST /api/auth/login
+Login with email and password.
+
+**Body:**
+```json
+{"email": "john@example.com", "password": "SecurePass1!"}
+```
+
+**Response:** `200`
+```json
+{"token": "<jwt>", "user": { ...profile }}
+```
+
+**Errors:** `401` Invalid credentials
+
+---
+
 ### GET /api/auth/me
 Get current user profile.
 
@@ -61,6 +100,25 @@ Update user profile. Only `name` and `picture` fields are allowed.
 ```
 
 **Errors:** `400` Invalid fields, `401` Not authenticated
+
+---
+
+### POST /api/auth/apply-referral
+Apply a referral code to an existing account (post-signup).
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Body:**
+```json
+{"referral_code": "SKILLPILOT-XXXXXXXX"}
+```
+
+**Response:** `200`
+```json
+{"status": "success", "credits_added": 20}
+```
+
+**Errors:** `400` Invalid code or self-referral, `401` Not authenticated
 
 ---
 
@@ -112,7 +170,7 @@ Generate a project report.
 }
 ```
 
-**Credits:** 8 (basic) | 11 (emergent)
+**Credits:** 8 (basic) | 10 (emergent)
 
 **Response:** `200`
 ```json
@@ -334,8 +392,58 @@ Stripe webhook endpoint for payment confirmation.
 | Tool | Basic | Emergent (1.3x) |
 |------|-------|-----------------|
 | Resume | 5 | 7 |
-| Project | 8 | 11 |
+| Project | 8 | 10 |
 | English | 2 | 3 |
 | Interview | 3 | 4 |
 
 New users receive **100 free credits** on signup.
+
+---
+
+## Referrals
+
+### GET /api/referrals/stats
+Get the current user's referral statistics.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200`
+```json
+{
+  "referral_code": "SKILLPILOT-A1B2C3D4",
+  "total_referrals": 3,
+  "credits_earned": 150,
+  "recent_referrals": [
+    {
+      "referred_user_name": "Jane Doe",
+      "credits_awarded": 50,
+      "created_at": "2026-03-10T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Geo Detection
+
+### GET /api/geo/detect
+Detect the user's location via IP address. Used for geo-based pricing on the purchase page.
+
+**Auth:** Not required
+
+**Response:** `200`
+```json
+{
+  "country_code": "IN",
+  "country": "India",
+  "is_vpn": false,
+  "region": "india"
+}
+```
+
+**Notes:**
+- `region` is either `"india"` or `"global"`
+- `is_vpn: true` if the IP is a detected proxy/hosting provider — purchase page blocks these users
+- Powered by ip-api.com (no API key required)
+- Falls back to `{"country_code": "UNKNOWN", "is_vpn": false, "region": "global"}` on failure

@@ -33,35 +33,43 @@
 ### Frontend (Vercel)
 - **Framework:** React 19 with CRACO build system
 - **Styling:** Tailwind CSS 3.4 with custom glass-effect theme
-- **Routing:** React Router v7 (12 routes)
-- **State:** React hooks (useState, useEffect) - no external state library
-- **Charts:** Custom CSS bar charts for credit usage visualization
-- **Payments:** react-razorpay SDK for payment popup
-- **Auth:** Supabase JS SDK for session management
+- **Routing:** React Router v7 (14 routes — 10 protected, 4 public policy pages)
+- **State:** React hooks (useState, useEffect) — no external state library
+- **UI Components:** shadcn/ui (Radix UI primitives)
+- **Payments:** react-razorpay v3.0.1 SDK for payment popup
+- **Auth:** Supabase JS SDK v2 with PKCE flow, auto token refresh, persistent sessions
+- **Icons:** Lucide React (500+ icons)
+- **Build:** CRACO with `@` path alias, `--legacy-peer-deps` required
 
 ### Backend (Railway)
-- **Framework:** FastAPI (Python)
-- **AI Engine:** Google Gemini via generative AI SDK
-- **Document Generation:** ReportLab (PDF) + python-docx (DOCX)
-- **Payment Processing:** Razorpay Python SDK
-- **Auth Middleware:** JWT validation via Supabase
-- **Database Client:** Supabase Python SDK
+- **Framework:** FastAPI 0.110.1 (Python 3.11)
+- **ASGI Server:** Uvicorn 0.25.0
+- **AI Engine:** LLMRouter with Gemini 2.5 Flash (primary) + GPT-4o-mini (fallback), retry + exponential backoff
+- **Document Generation:** ReportLab 4.4.9 (PDF) + python-docx 1.2.0 (DOCX)
+- **Payment Processing:** Razorpay Python SDK 2.0.0 (live), Stripe 14.3.0 (dormant)
+- **Geo Detection:** httpx async calls to ip-api.com for country/VPN detection
+- **Auth Middleware:** JWT validation via Supabase `auth.get_user()`
+- **Database Client:** Supabase Python SDK (dual clients — service role + anon)
+- **Rate Limiting:** Custom token-bucket middleware (30/min general, 10/min generation)
+- **Routers:** 7 routers — auth, generation, download, history, payments, referrals, geo
 
 ### Database (Supabase PostgreSQL)
 - **Auth:** Supabase Auth (email/password + Google OAuth)
-- **Tables:** profiles, generation_history, payment_transactions, referral_codes
-- **RLS:** Row-Level Security on all tables
-- **Triggers:** `handle_new_user()` creates profile on signup
+- **Tables:** profiles, generation_history, payment_transactions, referrals
+- **RLS:** Row-Level Security on all 4 tables
+- **Triggers:** `handle_new_user()` auto-creates profile with unique referral code on signup
+- **RPC:** `deduct_credits()` — atomic credit deduction with row-locking
 
 ### External Services
 | Service | Purpose | Config |
 |---------|---------|--------|
 | Supabase | Database + Auth | `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` |
-| Google Gemini | AI text generation | `GEMINI_API_KEY` |
-| Razorpay | INR + USD payments | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` |
+| Google Gemini 2.5 Flash | AI text generation (primary) | `GEMINI_API_KEY` |
+| OpenAI GPT-4o-mini | AI text generation (fallback) | `OPENAI_API_KEY` |
+| Razorpay | INR payments (live) | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` |
 | Stripe | USD payments (dormant) | `STRIPE_SECRET_KEY` |
-| Cloudflare | DNS, SSL, CDN | Zone: `skillspilot.xyz` |
-| Resend | Transactional email | `RESEND_API_KEY` |
+| ip-api.com | IP geolocation for pricing | No key required |
+| Cloudflare | DNS (DNS-only mode) | Zone: `skillspilot.xyz` |
 
 ## Data Flow Diagrams
 
